@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Force Admin2025 - SmartLoc</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+        .card { background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: auto; }
+        h1 { color: #003366; }
+        .btn { background: #003366; color: white; border: none; padding: 15px 30px; margin: 10px; border-radius: 8px; cursor: pointer; }
+        .btn-danger { background: #dc3545; }
+        .info { background: #e7f3ff; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        code { background: #f8f9fa; padding: 5px 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔧 Force Admin2025 - SmartLoc</h1>
+        
+        <div class="info">
+            <h3>📱 Pour installation sur nouveau téléphone ou PC</h3>
+            <p><strong>Utilisateur :</strong> admin</p>
+            <p><strong>Mot de passe :</strong> admin2025</p>
+        </div>
+        
+        <button class="btn" onclick="forcerAdmin2025()">
+            🔄 Forcer admin2025 (garder données)
+        </button>
+        
+        <button class="btn btn-danger" onclick="reinitialiserComplet()">
+            🗑️ Réinitialiser COMPLÈTEMENT
+        </button>
+        
+        <div id="result" style="margin-top: 20px;"></div>
+        
+        <div style="margin-top: 30px; font-size: 14px; color: #666;">
+            <p><strong>Instructions :</strong></p>
+            <ol>
+                <li>Allez sur <a href="login.html">login.html</a></li>
+                <li>Sélectionnez "Administrateur"</li>
+                <li>Entrez <code>admin2025</code></li>
+            </ol>
+            <p><strong>Lien :</strong> <a href="login.html">Se connecter</a></p>
+        </div>
+    </div>
+    
+    <script>
+        function forcerAdmin2025() {
+            if (!confirm("Forcer le mot de passe admin à 'admin2025' ?")) return;
+            
+            const params = JSON.parse(localStorage.getItem('smartloc_params')) || {};
+            params.adminPass = "admin2025";
+            
+            const users = JSON.parse(localStorage.getItem('smartloc_users')) || [];
+            const adminUser = users.find(u => u.id === "admin");
+            if (adminUser) {
+                adminUser.pass = "admin2025";
+            } else {
+                users.push({ id: "admin", pass: "admin2025" });
+            }
+            
+            localStorage.setItem('smartloc_params', JSON.stringify(params));
+            localStorage.setItem('smartloc_users', JSON.stringify(users));
+            
+            document.getElementById('result').innerHTML = '<div style="color: green; padding: 10px; background: #d4edda;">✅ Mot de passe forcé à admin2025</div>';
+        }
+        
+        function reinitialiserComplet() {
+            if (!confirm("ATTENTION : Toutes les données seront supprimées !")) return;
+            
+            localStorage.clear();
+            
+            const defaultConfig = {
+                smartloc_params: JSON.stringify({
+                    pdgNom: "Atizoun Plateny AMOUSSOU",
+                    adminPass: "admin2025",
+                    societeTel: "01 97 74 40 35",
+                    resetDate: new Date().toISOString()
+                }),
+                smartloc_users: JSON.stringify([{ id: "admin", pass: "admin2025" }])
+            };
+            
+            Object.keys(defaultConfig).forEach(key => {
+                localStorage.setItem(key, defaultConfig[key]);
+            });
+            
+            document.getElementById('result').innerHTML = '<div style="color: green; padding: 10px; background: #d4edda;">✅ Système réinitialisé avec admin2025</div>';
+        }
+    </script>
+</body>
+</html>

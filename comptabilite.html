@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartLoc – Comptabilité PDG</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003366">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SmartLoc">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/609/609803.png">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  
+  <style>
+    body {
+      background-color: #f0f2f5;
+      font-family: 'Segoe UI', sans-serif;
+      padding-top: 120px;
+    }
+    .navbar {
+      background-color: #003366;
+      padding-top: 15px;
+      padding-bottom: 15px;
+    }
+    .navbar-brand, .nav-link {
+      color: white !important;
+    }
+    .nav-images {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-right: 15px;
+    }
+    .nav-logo, .nav-timbre {
+      height: auto;
+      max-height: 85px;
+      width: auto;
+      max-width: 25vw;
+      object-fit: contain;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      padding: 2px;
+    }
+    h2 {
+      color: #003366;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+    .card-compta {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      background: white;
+    }
+    .configured {
+      color: #198754 !important;
+      font-weight: bold;
+    }
+    .pending {
+      color: #dc3545 !important;
+    }
+    /* Style Modale */
+    .modal-content {
+      border-radius: 20px;
+      border: none;
+    }
+    .modal-header {
+      background-color: #003366;
+      color: white;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+    }
+    .btn-save {
+      background-color: #003366;
+      color: white;
+      padding: 12px 30px;
+      border-radius: 10px;
+      transition: 0.3s;
+    }
+    .btn-save:hover {
+      background-color: #00509e;
+      color: white;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 0.9em;
+      text-align: center;
+      color: #666;
+    }
+
+    /* Style Impression identique aux pages précédentes */
+    #printArea { display: none; }
+    @media print {
+        body > * { display: none !important; }
+        #printArea {
+            display: block !important;
+            visibility: visible !important;
+            position: absolute;
+            left: 0; top: 0; width: 100%;
+            padding: 20px;
+            background: white;
+        }
+        .table { width: 100% !important; border-collapse: collapse !important; }
+        .table-info { background-color: #d1ecf1 !important; -webkit-print-color-adjust: exact; }
+        .table-success { background-color: #d4edda !important; -webkit-print-color-adjust: exact; }
+        .table-warning { background-color: #fff3cd !important; -webkit-print-color-adjust: exact; }
+        .print-header { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
+        .print-footer { margin-top: 50px; text-align: right; font-weight: bold; }
+        .sig-img { max-width: 150px; height: auto; display: block; margin-left: auto; margin-top: 10px; margin-bottom: 5px; }
+    }
+
+    @media (max-width: 576px) {
+      body { padding-top: 100px; }
+      .nav-logo, .nav-timbre { max-height: 50px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="printArea"></div>
+
+  <div id="mainContent">
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container-fluid">
+        <div class="nav-images">
+          <img src="logo.png" alt="Logo" class="nav-logo">
+          <img src="timbre.png" alt="Timbre" class="nav-timbre">
+        </div>
+        <a class="navbar-brand fw-bold fs-3" href="#">SmartLoc</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon bg-light"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link" href="index.html">Tableau de bord</a></li>
+            <li class="nav-item"><a class="nav-link" href="config.html">Configuration</a></li>
+            <li class="nav-item"><a class="nav-link" href="gestion.html">Gestion</a></li>
+            <li class="nav-item"><a class="nav-link" href="reparation.html">Réparations</a></li>
+            <li class="nav-item"><a class="nav-link active" href="comptabilite.html">Comptabilité</a></li>
+            <li class="nav-item"><a class="nav-link" href="parametres.html">Paramètres</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-10">
+          
+          <div class="card-compta p-4 text-center mb-4">
+            <h2 class="mb-4">📈 Paramétrage des Gains PDG</h2>
+            <p class="text-muted mb-4">Sélectionnez un bien immobilier pour définir le pourcentage de commission de gestion.</p>
+            
+            <div class="mb-4 text-start">
+              <label class="form-label fw-bold">🏢 Tous les biens immobiliers</label>
+              <select id="selectBien" class="form-select form-select-lg" onchange="verifierSelection()">
+                <option value="" selected disabled>Choisir un appartement...</option>
+              </select>
+            </div>
+
+            <button id="btnOuvrirModale" class="btn btn-primary btn-lg w-100 py-3 d-none" onclick="ouvrirModale()">
+              Configurer les gains pour ce bien
+            </button>
+          </div>
+
+          <div class="card-compta p-4 mb-4">
+            <h4 class="text-danger fw-bold mb-3">👤 Gestion des Fonds Propriétaires</h4>
+            <div class="row g-3 mb-4">
+              <div class="col-md-12">
+                <label class="form-label fw-bold">Sélectionner un Propriétaire</label>
+                <select id="selectProprioGestion" class="form-select form-select-lg" onchange="afficherComptaProprio()">
+                  <option value="" selected disabled>Choisir un propriétaire...</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="zoneComptaProprio" class="d-none">
+              <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                  <tbody id="corpsComptaProprio"></tbody>
+                </table>
+              </div>
+
+              <div class="mt-4 p-3 border rounded bg-light">
+                <h6 class="fw-bold mb-3">💸 Initier un Retrait Propriétaire</h6>
+                <div class="row g-2">
+                  <div class="col-md-4"><input type="number" id="mntRetraitProprio" class="form-control" placeholder="Montant"></div>
+                  <div class="col-md-5"><input type="text" id="motifRetraitProprio" class="form-control" placeholder="Motif (ex: Virement banque)"></div>
+                  <div class="col-md-3"><button class="btn btn-success w-100" onclick="enregistrerRetraitProprio()">Valider Retrait</button></div>
+                </div>
+              </div>
+
+              <h5 class="mt-4 fw-bold">📜 Historique des retraits du propriétaire</h5>
+              <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                  <thead><tr><th>Date</th><th>Motif</th><th class="text-end">Montant</th></tr></thead>
+                  <tbody id="histRetraitProprio"></tbody>
+                </table>
+              </div>
+              <button class="btn btn-outline-dark w-100 mt-2" onclick="imprimerRapportProprio()">🖨️ Imprimer Rapport Propriétaire</button>
+            </div>
+          </div>
+
+          <div class="card-compta p-4 mb-4">
+              <h4 class="text-success fw-bold mb-3">📄 Rapport Global Export</h4>
+              <div class="row g-3">
+                  <div class="col-md-4">
+                      <label class="form-label small fw-bold">👤 Propriétaire</label>
+                      <select id="selectProprioRapport" class="form-select">
+                          <option value="">Tous les propriétaires</option>
+                      </select>
+                  </div>
+                  <div class="col-md-4">
+                      <label class="form-label small fw-bold">🔄 Statut Locataire</label>
+                      <select id="filtreStatutLocataire" class="form-select">
+                          <option value="tous">Tous (Actifs & Vacants)</option>
+                          <option value="actif">Actifs uniquement</option>
+                          <option value="vacant">Vacants uniquement</option>
+                      </select>
+                  </div>
+                  <div class="col-md-4 d-flex align-items-end">
+                      <button class="btn btn-dark w-100" onclick="genererRapportProprietaire()">Télécharger Rapport Détaillé</button>
+                  </div>
+              </div>
+          </div>
+
+          <div class="card-compta p-4 mb-4">
+            <h4 class="text-primary fw-bold mb-3">📊 Récapitulatif Commission PDG</h4>
+            
+            <div class="row g-3 mb-3">
+              <div class="col-12">
+                <label class="form-label fw-bold">🔍 Consulter les biens configurés</label>
+                <select id="selectBienConfigure" class="form-select" onchange="afficherDetailsComptables()">
+                  <option value="" selected disabled>Sélectionner un bien configuré...</option>
+                </select>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label small fw-bold">📅 Du (Début)</label>
+                <input type="date" id="filtreDebut" class="form-control form-control-sm" onchange="afficherDetailsComptables()">
+              </div>
+              <div class="col-md-5">
+                <label class="form-label small fw-bold">📅 Au (Fin)</label>
+                <input type="date" id="filtreFin" class="form-control form-control-sm" onchange="afficherDetailsComptables()">
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-sm btn-outline-secondary w-100" onclick="reinitialiserFiltres()">Tout</button>
+              </div>
+            </div>
+
+            <div id="zoneDetailsComptables" class="d-none">
+              <div class="table-responsive" id="recapTableContainer">
+                <table class="table table-bordered align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Détail</th>
+                      <th class="text-end">Valeur</th>
+                    </tr>
+                  </thead>
+                  <tbody id="corpsDetailsComptables">
+                    </tbody>
+                </table>
+              </div>
+
+              <div class="mt-4 p-3 border rounded bg-light">
+                  <h6 class="fw-bold mb-3">💸 Enregistrer un retrait de commission PDG</h6>
+                  <div class="row g-2">
+                      <div class="col-md-4"><input type="number" id="montantRetrait" class="form-control" placeholder="Montant"></div>
+                      <div class="col-md-5"><input type="text" id="motifRetrait" class="form-control" placeholder="Motif du retrait"></div>
+                      <div class="col-md-3"><button class="btn btn-danger w-100" onclick="enregistrerRetrait()">Retirer</button></div>
+                  </div>
+              </div>
+
+              <button class="btn btn-success w-100 mt-3" onclick="imprimerRecapitulatif()">🖨️ Imprimer ce rapport</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <footer>
+        Conçu par <strong>Plateny AMOUSSOU</strong> – Professeur & Innovateur local<br />
+        📧 atizoun@gmail.com | 📞 01 97 74 40 35
+      </footer>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalCompta" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg">
+        <div class="modal-header">
+          <h5 class="modal-title">💎 Configuration du Gain PDG</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="formCompta">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Nom du Bien</label>
+              <input type="text" id="modalNomBien" class="form-control bg-light" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Pourcentage de gain (%)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white">📊</span>
+                <input type="number" id="pourcentageGain" class="form-control" placeholder="Ex: 10" required min="0" max="100">
+                <span class="input-group-text bg-white">%</span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Date d'effet</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white">📅</span>
+                <input type="date" id="dateEffet" class="form-control" required>
+              </div>
+            </div>
+            <div id="msgSucces" class="alert alert-success d-none mt-3">
+              ✅ Configuration enregistrée avec succès !
+            </div>
+            <div class="mt-4">
+              <button type="submit" class="btn btn-save w-100">Valider la configuration</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const selectBien = document.getElementById('selectBien');
+    const selectBienConfigure = document.getElementById('selectBienConfigure');
+    const selectProprioRapport = document.getElementById('selectProprioRapport');
+    const selectProprioGestion = document.getElementById('selectProprioGestion');
+    const btnOuvrirModale = document.getElementById('btnOuvrirModale');
+    const modalCompta = new bootstrap.Modal(document.getElementById('modalCompta'));
+    const formCompta = document.getElementById('formCompta');
+    const zoneDetails = document.getElementById('zoneDetailsComptables');
+    const corpsDetails = document.getElementById('corpsDetailsComptables');
+    const corpsComptaProprio = document.getElementById('corpsComptaProprio');
+    const histRetraitProprio = document.getElementById('histRetraitProprio');
+    const zoneComptaProprio = document.getElementById('zoneComptaProprio');
+    const filtreDebut = document.getElementById('filtreDebut');
+    const filtreFin = document.getElementById('filtreFin');
+    const printArea = document.getElementById('printArea');
+
+    function chargerBiens() {
+      const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+      const comptaConfig = JSON.parse(localStorage.getItem('compta_config')) || {};
+      const proprios = JSON.parse(localStorage.getItem('smartloc_proprios')) || [];
+      
+      selectBien.innerHTML = '<option value="" selected disabled>Choisir un appartement...</option>';
+      selectBienConfigure.innerHTML = '<option value="" selected disabled>Sélectionner un bien configuré...</option>';
+      selectProprioRapport.innerHTML = '<option value="">Tous les propriétaires</option>';
+      selectProprioGestion.innerHTML = '<option value="" selected disabled>Choisir un propriétaire...</option>';
+
+      proprios.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.nom; opt.textContent = p.nom;
+          selectProprioRapport.appendChild(opt);
+          
+          const opt2 = opt.cloneNode(true);
+          selectProprioGestion.appendChild(opt2);
+      });
+      
+      appartements.forEach((apt, index) => {
+        const isConfigured = comptaConfig[index] !== undefined;
+        const option = document.createElement('option');
+        option.value = index;
+        
+        if (isConfigured) {
+          option.textContent = `${apt.nom} – ${apt.locataire} (CONFIGURÉ ✅)`;
+          option.classList.add('configured');
+          
+          const optionConf = document.createElement('option');
+          optionConf.value = index;
+          optionConf.textContent = `${apt.nom} (${apt.locataire})`;
+          selectBienConfigure.appendChild(optionConf);
+        } else {
+          option.textContent = `${apt.nom} – ${apt.locataire} (À FAIRE ⏳)`;
+          option.classList.add('pending');
+        }
+        selectBien.appendChild(option);
+      });
+    }
+
+    // --- LOGIQUE GESTION PROPRIETAIRES ---
+    function afficherComptaProprio() {
+      const nomProprio = selectProprioGestion.value;
+      
+      // VÉRIFICATION RENFORCÉE
+      if (!nomProprio) {
+        zoneComptaProprio.classList.add('d-none');
+        return;
+      }
+      
+      const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+      const appartementsDuProprio = appartements.filter(a => a.proprietaireNom === nomProprio);
+      
+      if (appartementsDuProprio.length === 0) {
+        alert(`❌ Aucun appartement trouvé pour "${nomProprio}".\n\ Veuillez d'abord :\n1. Configurer ce propriétaire dans Paramètres\n2. Ajouter des appartements dans Configuration`);
+        zoneComptaProprio.classList.add('d-none');
+        selectProprioGestion.value = "";
+        return;
+      }
+
+        const comptaConfig = JSON.parse(localStorage.getItem('compta_config')) || {};
+        const paiementsGlobal = JSON.parse(localStorage.getItem('paiements')) || {};
+        const retraitsProprioGlobal = JSON.parse(localStorage.getItem('retraits_proprio')) || {};
+
+        let totalDroit = 0;
+        let totalEncaissé = 0;
+        let detailsAptHtml = '';
+
+        appartements.forEach((apt, idx) => {
+            if (apt.proprietaireNom === nomProprio) {
+                const config = comptaConfig[idx];
+                
+                // SECURITE : Verifier configuration PDG
+                if (!config) {
+                    alert(`Attention : Le bien "${apt.nom}" n'est pas configuré (% PDG manquant). Veuillez le configurer en haut de page avant de continuer.`);
+                    zoneComptaProprio.classList.add('d-none');
+                    selectProprioGestion.value = "";
+                    return;
+                }
+
+                const paiements = (paiementsGlobal[idx] || []).filter(p => p.type === 'Paiement');
+                const encaisseApt = paiements.reduce((sum, p) => sum + parseFloat(p.montant), 0);
+                const comPdg = encaisseApt * (parseFloat(config.pourcentage) / 100);
+                const droitApt = encaisseApt - comPdg;
+                
+                totalEncaissé += encaisseApt;
+                totalDroit += droitApt;
+
+                detailsAptHtml += `
+                    <tr class="small text-muted">
+                        <td class="ps-4">↳ ${apt.nom} (${apt.locataire})</td>
+                        <td class="text-end">Recette: ${encaisseApt.toLocaleString()} | Com PDG (${config.pourcentage}%): -${comPdg.toLocaleString()} | <b>Net: ${droitApt.toLocaleString()}</b></td>
+                    </tr>
+                `;
+            }
+        });
+
+        if (selectProprioGestion.value === "") return;
+
+        const retraits = retraitsProprioGlobal[nomProprio] || [];
+        const totalRetraits = retraits.reduce((sum, r) => sum + parseFloat(r.montant), 0);
+        const soldeNet = totalDroit - totalRetraits;
+
+        corpsComptaProprio.innerHTML = `
+            <tr><td><strong>Propriétaire</strong></td><td class="text-end fw-bold">${nomProprio}</td></tr>
+            <tr><td colspan="2" class="bg-light fw-bold">Détails des Droits par Appartement :</td></tr>
+            ${detailsAptHtml}
+            <tr><td><strong>Total Revenus Bruts (Encaissements)</strong></td><td class="text-end">${totalEncaissé.toLocaleString()} FCFA</td></tr>
+            <tr class="table-info">
+                <td><strong>Droit Total Net Cumulé (Après Com. PDG)</strong></td>
+                <td class="text-end fw-bold">${totalDroit.toLocaleString()} FCFA</td>
+            </tr>
+            <tr class="table-warning">
+                <td><strong>Total des Retraits effectués</strong></td>
+                <td class="text-end fw-bold text-danger">-${totalRetraits.toLocaleString()} FCFA</td>
+            </tr>
+            <tr class="table-success">
+                <td><strong class="fs-5">SOLDE DISPONIBLE (A REVERSER)</strong></td>
+                <td class="text-end fw-bold fs-5 text-success">${soldeNet.toLocaleString()} FCFA</td>
+            </tr>
+        `;
+
+        histRetraitProprio.innerHTML = retraits.map(r => `
+            <tr><td>${r.date}</td><td>${r.motif}</td><td class="text-end text-danger fw-bold">-${parseFloat(r.montant).toLocaleString()}</td></tr>
+        `).reverse().join('') || '<tr><td colspan="3" class="text-center">Aucun retrait.</td></tr>';
+
+        zoneComptaProprio.classList.remove('d-none');
+    }
+
+    function enregistrerRetraitProprio() {
+        const nomProprio = selectProprioGestion.value;
+        const montant = parseFloat(document.getElementById('mntRetraitProprio').value);
+        const motif = document.getElementById('motifRetraitProprio').value;
+
+        if (!montant || montant <= 0 || !motif) return alert("Saisie invalide.");
+        if (!confirm(`Confirmez-vous le versement de ${montant.toLocaleString()} FCFA à ${nomProprio} ?`)) return;
+
+        const retraitsGlobal = JSON.parse(localStorage.getItem('retraits_proprio')) || {};
+        if (!retraitsGlobal[nomProprio]) retraitsGlobal[nomProprio] = [];
+
+        retraitsGlobal[nomProprio].push({
+            montant: montant,
+            motif: motif,
+            date: new Date().toISOString().split('T')[0]
+        });
+
+        localStorage.setItem('retraits_proprio', JSON.stringify(retraitsGlobal));
+        document.getElementById('mntRetraitProprio').value = '';
+        document.getElementById('motifRetraitProprio').value = '';
+        afficherComptaProprio();
+    }
+
+    function imprimerRapportProprio() {
+        const entete = `
+            <div class="text-center mb-4">
+                <img src="logo.png" style="max-height:80px;">
+                <h3>ÉTAT DE COMPTE PROPRIÉTAIRE DÉTAILLÉ</h3>
+                <hr>
+                <p>Édité le ${new Date().toLocaleDateString()}</p>
+            </div>
+        `;
+        const content = zoneComptaProprio.innerHTML;
+        printArea.innerHTML = entete + ` <table class="table table-bordered">${content}</table> `;
+        
+        // Cacher les sections de saisie pour l'impression
+        const inputs = printArea.querySelectorAll('.p-3.border, button, .bg-light');
+        
+        setTimeout(() => { window.print(); }, 500);
+    }
+
+    // --- LOGIQUE PDG ET RAPPORTS EXISTANTS ---
+    function verifierSelection() {
+      if (selectBien.value !== "") btnOuvrirModale.classList.remove('d-none');
+    }
+
+    function reinitialiserFiltres() {
+      filtreDebut.value = ""; filtreFin.value = "";
+      afficherDetailsComptables();
+    }
+
+    function afficherDetailsComptables() {
+      const index = selectBienConfigure.value;
+      if (index === "") return;
+      const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+      const comptaConfig = JSON.parse(localStorage.getItem('compta_config')) || {};
+      const paiementsGlobal = JSON.parse(localStorage.getItem('paiements')) || {};
+      const retraitsGlobal = JSON.parse(localStorage.getItem('retraits_commission')) || {};
+      const apt = appartements[index];
+      const config = comptaConfig[index];
+      
+      if (!config) {
+          alert("Erreur: Ce bien n'a pas de configuration PDG active.");
+          return;
+      }
+
+      const paiementsApt = paiementsGlobal[index] || [];
+      const retraitsApt = retraitsGlobal[index] || [];
+      const debut = filtreDebut.value; const fin = filtreFin.value;
+
+      const filtrerParDate = (item) => {
+        const dateStr = item.dateEnregistrement ? item.dateEnregistrement.split('T')[0] : (item.date || "");
+        if (!dateStr) return true;
+        if (debut && dateStr < debut) return false;
+        if (fin && dateStr > fin) return false;
+        return true;
+      };
+
+      const paiementsFiltrés = paiementsApt.filter(p => p.type === 'Paiement' && filtrerParDate(p));
+      const totalEncaisse = paiementsFiltrés.reduce((sum, p) => sum + parseFloat(p.montant), 0);
+      const commissionPDG = (totalEncaisse * (parseFloat(config.pourcentage) / 100));
+      const totalRetraits = retraitsApt.filter(r => filtrerParDate(r)).reduce((sum, r) => sum + parseFloat(r.montant), 0);
+      const soldeNet = commissionPDG - totalRetraits;
+
+      corpsDetailsComptables.innerHTML = `
+        <tr><td><strong>Appartement</strong></td><td class="text-end">${apt.nom}</td></tr>
+        <tr class="table-info"><td><strong>Revenu Total</strong></td><td class="text-end">${totalEncaisse.toLocaleString()} FCFA</td></tr>
+        <tr class="table-success"><td><strong>Com. PDG (${config.pourcentage}%)</strong></td><td class="text-end">${commissionPDG.toLocaleString()} FCFA</td></tr>
+        <tr class="table-warning text-danger"><td><strong>Total Retraits PDG</strong></td><td class="text-end">-${totalRetraits.toLocaleString()} FCFA</td></tr>
+        <tr style="background-color: #003366; color: white;"><td><strong>SOLDE PDG</strong></td><td class="text-end fw-bold">${soldeNet.toLocaleString()} FCFA</td></tr>
+      `;
+      zoneDetails.classList.remove('d-none');
+    }
+
+    function enregistrerRetrait() {
+        const index = selectBienConfigure.value;
+        const montant = parseFloat(document.getElementById('montantRetrait').value);
+        const motif = document.getElementById('motifRetrait').value;
+        if (!montant || !motif) return alert("Complétez les champs.");
+        if (!confirm(`Retrait PDG de ${montant.toLocaleString()} FCFA ?`)) return;
+
+        const retraitsGlobal = JSON.parse(localStorage.getItem('retraits_commission')) || {};
+        if (!retraitsGlobal[index]) retraitsGlobal[index] = [];
+        retraitsGlobal[index].push({ montant: montant, motif: motif, date: new Date().toISOString().split('T')[0] });
+        localStorage.setItem('retraits_commission', JSON.stringify(retraitsGlobal));
+        document.getElementById('montantRetrait').value = '';
+        document.getElementById('motifRetrait').value = '';
+        afficherDetailsComptables();
+    }
+
+    function genererRapportProprietaire() {
+        const proprioSelect = selectProprioRapport.value;
+        const statutFiltre = document.getElementById('filtreStatutLocataire').value;
+        const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+        const comptaConfig = JSON.parse(localStorage.getItem('compta_config')) || {};
+        const paiementsGlobal = JSON.parse(localStorage.getItem('paiements')) || {};
+
+        let totalProprio = 0;
+        let htmlContent = `<div class="p-4 bg-white border"><h3>RAPPORT DÉTAILLÉ : ${proprioSelect || 'TOUS'}</h3><table class="table table-bordered">
+            <thead><tr><th>Appartement</th><th>Locataire</th><th>Brut Encaissé</th><th>Com PDG (%)</th><th>Droit Net</th></tr></thead><tbody>`;
+
+        for (let idx = 0; idx < appartements.length; idx++) {
+            const apt = appartements[idx];
+            const matchProprio = !proprioSelect || apt.proprietaireNom === proprioSelect;
+            const matchStatut = (statutFiltre === 'tous') || (statutFiltre === 'actif' && apt.locataire !== 'VACANT') || (statutFiltre === 'vacant' && apt.locataire === 'VACANT');
+            
+            if (matchProprio && matchStatut) {
+                const config = comptaConfig[idx];
+                
+                // SECURITE : Bloquer si non configuré
+                if (!config) {
+                    alert(`Impossible de générer le rapport. Le bien "${apt.nom}" n'est pas configuré.`);
+                    return;
+                }
+
+                const encaisse = (paiementsGlobal[idx] || []).filter(p => p.type === 'Paiement').reduce((sum, p) => sum + parseFloat(p.montant), 0);
+                const comPdg = encaisse * (parseFloat(config.pourcentage) / 100);
+                const net = encaisse - comPdg;
+                totalProprio += net;
+                htmlContent += `<tr><td>${apt.nom}</td><td>${apt.locataire}</td><td>${encaisse.toLocaleString()}</td><td>-${comPdg.toLocaleString()} (${config.pourcentage}%)</td><td><b>${net.toLocaleString()}</b></td></tr>`;
+            }
+        }
+
+        htmlContent += `</tbody><tfoot><tr class="table-success"><td colspan="4" class="text-end fw-bold">TOTAL NET PROPRIÉTAIRE :</td><td class="fw-bold">${totalProprio.toLocaleString()} FCFA</td></tr></tfoot></table></div>`;
+        printArea.innerHTML = htmlContent;
+        setTimeout(() => { window.print(); }, 500);
+    }
+
+    function imprimerRecapitulatif() {
+        printArea.innerHTML = `<h3>RÉCAPITULATIF COMMISSION PDG</h3>` + document.getElementById('recapTableContainer').innerHTML;
+        setTimeout(() => { window.print(); }, 500);
+    }
+
+    function ouvrirModale() {
+      const index = selectBien.value;
+      const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+      const comptaConfig = JSON.parse(localStorage.getItem('compta_config')) || {};
+      document.getElementById('modalNomBien').value = appartements[index].nom;
+      if (comptaConfig[index]) {
+        document.getElementById('pourcentageGain').value = comptaConfig[index].pourcentage;
+        document.getElementById('dateEffet').value = comptaConfig[index].date;
+      } else {
+        document.getElementById('pourcentageGain').value = '';
+        document.getElementById('dateEffet').value = new Date().toISOString().split('T')[0];
+      }
+      document.getElementById('msgSucces').classList.add('d-none');
+      modalCompta.show();
+    }
+
+    formCompta.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const index = selectBien.value;
+      const comptaConfig = JSON.parse(localStorage.getItem('compta_config')) || {};
+      comptaConfig[index] = { pourcentage: document.getElementById('pourcentageGain').value, date: document.getElementById('dateEffet').value };
+      localStorage.setItem('compta_config', JSON.stringify(comptaConfig));
+      document.getElementById('msgSucces').classList.remove('d-none');
+      setTimeout(() => { modalCompta.hide(); chargerBiens(); btnOuvrirModale.classList.add('d-none'); }, 1500);
+    });
+
+    window.onload = chargerBiens;
+  </script>
+
+<script src="pwa-setup.js"></script>
+<script src="synchronisation.js"></script>
+
+<script>
+  // Initialisation au chargement
+  document.addEventListener('DOMContentLoaded', function() {
+    // Synchronisation des données
+    if (typeof SmartLocSync !== 'undefined') {
+      SmartLocSync.initialiser();
+    }
+    
+    // Pour les pages admin, vérifier les problèmes
+    const session = JSON.parse(localStorage.getItem('smartloc_session'));
+    if (session && session.role === 'admin' && typeof verifierEtNotifierProblemes === 'function') {
+      setTimeout(() => verifierEtNotifierProblemes(), 500);
+    }
+  });
+</script>
+
+<script src="initialisation.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Vérifier si besoin d'initialiser admin2025
+    const params = localStorage.getItem('smartloc_params');
+    if (!params) {
+        // Première installation
+        const defaultParams = {
+            pdgNom: "Atizoun Plateny AMOUSSOU",
+            adminPass: "admin2025",
+            societeTel: "01 97 74 40 35",
+            firstInstall: new Date().toISOString()
+        };
+        localStorage.setItem('smartloc_params', JSON.stringify(defaultParams));
+        
+        // Sur la page login, afficher message
+        if (window.location.pathname.includes('login.html')) {
+            setTimeout(() => {
+                alert('🎉 SmartLoc initialisé !\n\nUtilisez :\n👤 Administrateur\n🔑 admin2025');
+            }, 500);
+        }
+    }
+    
+    // Initialiser la synchronisation si elle existe
+    if (typeof SmartLocSync !== 'undefined') {
+        SmartLocSync.initialiser();
+    }
+  });
+</script>
+</body>
+</html>

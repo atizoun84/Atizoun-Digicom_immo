@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SmartLoc – Réparation</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003366">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SmartLoc">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/609/609803.png">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { 
+      font-family: 'Segoe UI', sans-serif; 
+      padding-top: 120px; /* Ajusté pour la navbar */
+      background: #f0f2f5;
+    }
+    h1 { color: #003366; }
+    .btn-repair { 
+      margin: 10px; 
+      padding: 15px 25px; 
+      background: #003366; 
+      color: white; 
+      border: none; 
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    .btn-repair:hover { background: #00509e; }
+    .success { color: green; padding: 10px; font-weight: bold; }
+    .error { color: red; padding: 10px; }
+    .warning { color: orange; padding: 10px; }
+    .box { 
+      background: white; 
+      padding: 20px; 
+      border-radius: 10px; 
+      margin: 20px auto;
+      max-width: 800px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    /* Styles Navbar habituels */
+    .navbar {
+      background-color: #003366;
+      padding-top: 15px;
+      padding-bottom: 15px;
+    }
+    .navbar-brand, .nav-link {
+      color: white !important;
+    }
+    .nav-images {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-right: 15px;
+    }
+    .nav-logo, .nav-timbre {
+      height: auto;
+      max-height: 85px;
+      width: auto;
+      max-width: 25vw;
+      object-fit: contain;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      padding: 2px;
+    }
+    @media (max-width: 576px) {
+      body { padding-top: 100px; }
+      .nav-logo, .nav-timbre { max-height: 50px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar fixed-top navbar-expand-lg">
+    <div class="container-fluid">
+      <div class="nav-images">
+        <img src="logo.png" alt="Logo" class="nav-logo">
+        <img src="timbre.png" alt="Timbre" class="nav-timbre">
+      </div>
+      <a class="navbar-brand fw-bold fs-3" href="#">SmartLoc</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon bg-light"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Tableau de bord</a></li>
+          <li class="nav-item"><a class="nav-link" href="config.html">Configuration</a></li>
+          <li class="nav-item"><a class="nav-link" href="gestion.html">Gestion</a></li>
+          <li class="nav-item"><a class="nav-link active" href="reparation.html">Réparations</a></li>
+          <li class="nav-item"><a class="nav-link" href="comptabilite.html">Comptabilité</a></li>
+          <li class="nav-item"><a class="nav-link" href="parametres.html">Paramètres</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="box">
+      <h1>🔧 Outil de réparation SmartLoc</h1>
+      <p>Cet outil permet de réparer les problèmes de données.</p>
+      
+      <button class="btn-repair" onclick="reparerLiensProprios()">
+        🔄 Réparer les liens propriétaires
+      </button>
+      
+      <button class="btn-repair" onclick="creerConfigsParDefaut()">
+        📊 Créer configurations PDG par défaut (10%)
+      </button>
+      
+      <button class="btn-repair" onclick="nettoyerDonnees()">
+        🧹 Nettoyer données corrompues
+      </button>
+      
+      <button class="btn-repair" onclick="exporterDiagnostic()">
+        📋 Exporter diagnostic
+      </button>
+      
+      <button class="btn-repair" onclick="reinitialiserFiltres()">
+        🗑️ Réinitialiser tous les filtres
+      </button>
+      
+      <div id="resultat" class="mt-3"></div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Fonctions de réparation originales
+    function reparerLiensProprios() {
+      const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+      const proprios = JSON.parse(localStorage.getItem('smartloc_proprios')) || [];
+      
+      let reparations = 0;
+      
+      appartements.forEach(apt => {
+        if (!apt.proprietaireNom || apt.proprietaireNom.trim() === '') {
+          const proprio = proprios.find(p => 
+            p.appartements && p.appartements.includes(apt.nom)
+          );
+          if (proprio) {
+            apt.proprietaireNom = proprio.nom;
+            reparations++;
+          }
+        }
+      });
+      
+      localStorage.setItem('appartements', JSON.stringify(appartements));
+      document.getElementById('resultat').innerHTML = 
+        `<div class="success">✅ ${reparations} liens propriétaires réparés</div>`;
+    }
+    
+    function creerConfigsParDefaut() {
+      const comptaConfig = JSON.parse(localStorage.getItem('compta_config')) || {};
+      const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+      
+      let creations = 0;
+      appartements.forEach((apt, index) => {
+        if (!comptaConfig[index]) {
+          comptaConfig[index] = {
+            pourcentage: 10,
+            date: new Date().toISOString().split('T')[0]
+          };
+          creations++;
+        }
+      });
+      
+      localStorage.setItem('compta_config', JSON.stringify(comptaConfig));
+      document.getElementById('resultat').innerHTML = 
+        `<div class="success">✅ ${creations} configurations PDG créées (10% par défaut)</div>`;
+    }
+    
+    function nettoyerDonnees() {
+      const clefs = ['appartements', 'paiements', 'compta_config', 'retraits_commission', 'retraits_proprio'];
+      let nettoyages = 0;
+      
+      clefs.forEach(clef => {
+        const data = JSON.parse(localStorage.getItem(clef));
+        if (data && Object.keys(data).length === 0) {
+          localStorage.removeItem(clef);
+          nettoyages++;
+        }
+      });
+      
+      document.getElementById('resultat').innerHTML = 
+        `<div class="success">✅ ${nettoyages} jeux de données vides nettoyés</div>`;
+    }
+    
+    function verifierIntegriteDonnees() {
+        let erreurs = [];
+        if (!localStorage.getItem('smartloc_params')) erreurs.push("Paramètres PDG manquants");
+        return erreurs;
+    }
+
+    function exporterDiagnostic() {
+      const diagnostic = {
+        date: new Date().toISOString(),
+        appartements: JSON.parse(localStorage.getItem('appartements') || '[]').length,
+        proprios: JSON.parse(localStorage.getItem('smartloc_proprios') || '[]').length,
+        paiements: Object.keys(JSON.parse(localStorage.getItem('paiements') || '{}')).length,
+        comptaConfig: Object.keys(JSON.parse(localStorage.getItem('compta_config') || '{}')).length,
+        session: localStorage.getItem('smartloc_session') ? 'Oui' : 'Non',
+        problemes: verifierIntegriteDonnees()
+      };
+      
+      const texte = JSON.stringify(diagnostic, null, 2);
+      const blob = new Blob([texte], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `diagnostic_smartloc_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      
+      document.getElementById('resultat').innerHTML = 
+        `<div class="success">✅ Diagnostic exporté avec succès</div>`;
+    }
+    
+    function reinitialiserFiltres() {
+      localStorage.removeItem('smartloc_pv_lieu');
+      document.getElementById('resultat').innerHTML = 
+        `<div class="success">✅ Filtres réinitialisés</div>`;
+    }
+  </script>
+
+  <script src="pwa-setup.js"></script>
+  <script src="synchronisation.js"></script>
+
+  <script>
+    // Initialisation au chargement
+    document.addEventListener('DOMContentLoaded', function() {
+      // Synchronisation des données
+      if (typeof SmartLocSync !== 'undefined') {
+        SmartLocSync.initialiser();
+      }
+      
+      // Pour les pages admin, vérifier les problèmes
+      const session = JSON.parse(localStorage.getItem('smartloc_session'));
+      if (session && session.role === 'admin' && typeof verifierEtNotifierProblemes === 'function') {
+        setTimeout(() => verifierEtNotifierProblemes(), 500);
+      }
+    });
+  </script>
+
+<script src="initialisation.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Vérifier si besoin d'initialiser admin2025
+    const params = localStorage.getItem('smartloc_params');
+    if (!params) {
+        // Première installation
+        const defaultParams = {
+            pdgNom: "Atizoun Plateny AMOUSSOU",
+            adminPass: "admin2025",
+            societeTel: "01 97 74 40 35",
+            firstInstall: new Date().toISOString()
+        };
+        localStorage.setItem('smartloc_params', JSON.stringify(defaultParams));
+        
+        // Sur la page login, afficher message
+        if (window.location.pathname.includes('login.html')) {
+            setTimeout(() => {
+                alert('🎉 SmartLoc initialisé !\n\nUtilisez :\n👤 Administrateur\n🔑 admin2025');
+            }, 500);
+        }
+    }
+    
+    // Initialiser la synchronisation si elle existe
+    if (typeof SmartLocSync !== 'undefined') {
+        SmartLocSync.initialiser();
+    }
+  });
+</script>
+</body>
+</html>

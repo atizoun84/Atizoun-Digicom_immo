@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SmartLoc – Paramètres</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003366">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SmartLoc">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/609/609803.png">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* Empêcher le scroll horizontal sur tout le document */
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+    }
+    body {
+      background-color: #f0f2f5;
+      font-family: 'Segoe UI', sans-serif;
+      color: #333;
+      padding-top: 120px;
+    }
+    h2, h4 {
+      color: #003366;
+      font-weight: 600;
+    }
+    .form-label {
+      font-weight: 500;
+      color: #003366;
+    }
+    .btn-primary {
+      background-color: #003366;
+      border: none;
+    }
+    .btn-primary:hover {
+      background-color: #00509e;
+    }
+    .card {
+      border-left: 5px solid #003366;
+      margin-top: 10px;
+      border-radius: 8px;
+      max-width: 100%; /* Sécurité écran */
+    }
+    .navbar {
+      background-color: #003366;
+      padding-top: 15px;
+      padding-bottom: 15px;
+    }
+    .navbar-brand, .nav-link {
+      color: white !important;
+    }
+    .nav-images {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-right: 15px;
+    }
+    .nav-logo, .nav-timbre {
+      height: auto;
+      max-height: 85px;
+      width: auto;
+      max-width: 25vw;
+      object-fit: contain;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      padding: 2px;
+    }
+    .signature-display {
+      max-width: 100%; /* Ajusté pour mobile */
+      height: auto;
+      border: 2px solid #003366;
+      padding: 5px;
+      margin-top: 10px;
+      display: none;
+      background: white;
+    }
+    /* Style pour le mode verrouillé (Bleu et Gras) */
+    .locked-highlight {
+      color: #0000FF !important; /* Bleu */
+      font-weight: bold !important;
+      background-color: #e9ecef !important;
+    }
+    /* Bouton déverrouiller fond rouge */
+    .btn-unlock {
+      background-color: #dc3545 !important;
+      border: none !important;
+      color: white !important;
+    }
+    /* Correction pour les tableaux sur mobile */
+    .table-responsive {
+      border: none;
+    }
+    @media (max-width: 576px) {
+      body { padding-top: 100px; }
+      .nav-logo, .nav-timbre { max-height: 50px; }
+      .btn-lg { font-size: 1rem; padding: 10px; }
+      .container { padding-left: 10px; padding-right: 10px; }
+    }
+    .proprio-sig-mini {
+      max-height: 40px;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar fixed-top navbar-expand-lg">
+    <div class="container-fluid">
+      <div class="nav-images">
+        <img src="logo.png" alt="Logo" class="nav-logo">
+        <img src="timbre.png" alt="Timbre" class="nav-timbre">
+      </div>
+      <a class="navbar-brand fw-bold fs-3" href="#">SmartLoc</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon bg-light"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Tableau de bord</a></li>
+          <li class="nav-item"><a class="nav-link" href="config.html">Configuration</a></li>
+          <li class="nav-item"><a class="nav-link" href="gestion.html">Gestion</a></li>
+          <li class="nav-item"><a class="nav-link" href="reparation.html">Réparations</a></li>
+          <li class="nav-item"><a class="nav-link" href="comptabilite.html">Comptabilité</a></li>
+          <li class="nav-item"><a class="nav-link active" href="parametres.html">Paramètres</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mb-5">
+    <h2 class="text-center mb-4">⚙️ Paramètres Généraux</h2>
+
+    <form id="formGlobalParametres">
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h4>👔 Administration (PDG)</h4>
+            <div class="mb-3">
+                <label class="form-label">Nom complet du PDG</label>
+                <input type="text" id="nomPDG" class="form-control" placeholder="Ex: Atizoun Plateny AMOUSSOU" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Mot de passe Administrateur</label>
+                <div class="input-group">
+                    <input type="password" id="adminPass" class="form-control" placeholder="Mot de passe pour accès restreint">
+                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('adminPass')">👁️</button>
+                </div>
+            </div>
+            <div class="mb-3" id="containerSigPDG">
+                <label class="form-label">Signature du PDG (PNG)</label>
+                <input type="file" id="sigPDGInput" class="form-control mb-2" accept="image/png" style="display:none;">
+                <div class="d-grid gap-2">
+                    <button type="button" id="btnImportSig" class="btn btn-outline-primary" onclick="confirmerImport()">Sélectionner l'image de signature</button>
+                    <button type="button" id="btnActionImport" class="btn btn-secondary btn-sm" onclick="confirmerImport()">Importer</button>
+                </div>
+                <img id="previewSigPDG" class="signature-display" alt="Signature enregistrée">
+            </div>
+          </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h4>🏢 Information </h4>
+            <div class="mb-3">
+                <label class="form-label">Téléphones</label>
+                <input type="text" id="telSociete" class="form-control" placeholder="Ex: 01 97 74 40 35 / 01 00 00 00 00">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email de réception des sauvegardes</label>
+                <input type="email" id="emailSociete" class="form-control" placeholder="beciafrik@gmail.com">
+            </div>
+          </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h4>🏘️ Gestion des Propriétaires & Biens</h4>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleVisibility('containerListeProprios')">Afficher / Masquer la liste</button>
+            </div>
+            <div id="sectionAjoutProprio" class="row g-3 mt-2">
+              <div class="col-md-4">
+                <label class="form-label">Nom du Propriétaire</label>
+                <input type="text" id="proprioName" class="form-control" placeholder="Ex: SCI Immobilière">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Téléphone</label>
+                <input type="text" id="proprioTel" class="form-control" placeholder="Ex: 01 02 03 04 05">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Appartements (virgule)</label>
+                <input type="text" id="appartNames" class="form-control" placeholder="Appt A1, Studio B">
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">Signature Propriétaire (PNG)</label>
+                <input type="file" id="proprioSigInput" class="form-control" accept="image/png">
+              </div>
+              <div class="col-md-4 align-self-end">
+                <button type="button" id="btnAddProprio" onclick="ajouterProprioListe()" class="btn btn-success w-100">Ajouter</button>
+              </div>
+              <input type="hidden" id="editProprioIndex" value="-1">
+            </div>
+            <div id="containerListeProprios" style="display: none;" class="mt-4">
+                <div id="listeProprios" class="table-responsive"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h4>👥 Gestion des Utilisateurs</h4>
+            <div id="sectionAjoutUser" class="row g-3 align-items-end mb-3">
+              <div class="col-md-5">
+                <label class="form-label">Identifiant</label>
+                <input type="text" id="userName" class="form-control">
+              </div>
+              <div class="col-md-5">
+                <label class="form-label">Mot de passe</label>
+                <div class="input-group">
+                    <input type="password" id="userPass" class="form-control">
+                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('userPass')">👁️</button>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <button type="button" onclick="ajouterUtilisateurListe()" class="btn btn-success w-100">Ajouter</button>
+              </div>
+            </div>
+            <div id="listeUsers" class="mt-4 table-responsive">
+              </div>
+          </div>
+        </div>
+
+        <div class="text-center mt-5 d-flex flex-wrap justify-content-center gap-3">
+            <button type="submit" id="btnMainAction" class="btn btn-primary btn-lg px-4 shadow">💾 Enregistrer tout</button>
+            <button type="button" onclick="reinitialiserSysteme()" class="btn btn-warning btn-lg px-4 shadow">🔄 Réinitialiser</button>
+            <a href="force-admin2025.html" class="btn btn-danger btn-lg px-4 shadow">🔧 Forcer admin2025</a>
+        </div>
+    </form>
+
+    <div id="alertBox" class="alert alert-success mt-4 text-center fw-bold" style="display:none; font-size: 1.2rem;">✓ Paramètres sauvegardés et verrouillés !</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    let tempUsers = [];
+    let tempProprios = [];
+    let isLocked = true; 
+    let currentSignatureBase64 = null;
+
+    window.onload = function() {
+      chargerParams();
+      afficherUsers();
+      afficherProprios();
+      verrouillerLectureSeule(); 
+
+      document.getElementById('sigPDGInput').addEventListener('change', async function() {
+          const base64 = await encodeImageFileAsURL(this);
+          if (base64) {
+              currentSignatureBase64 = base64;
+              const img = document.getElementById('previewSigPDG');
+              img.src = base64;
+              img.style.display = 'block';
+          }
+      });
+    };
+
+    function showAlert(msg) {
+      const box = document.getElementById('alertBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+      window.scrollTo(0, document.body.scrollHeight);
+      setTimeout(() => box.style.display = 'none', 4000);
+    }
+
+    function toggleVisibility(id) {
+        const div = document.getElementById(id);
+        div.style.display = (div.style.display === 'none') ? 'block' : 'none';
+    }
+
+    function togglePasswordVisibility(id) {
+        const input = document.getElementById(id);
+        input.type = input.type === "password" ? "text" : "password";
+    }
+
+    function encodeImageFileAsURL(element) {
+        return new Promise((resolve) => {
+            const file = element.files[0];
+            if (!file) {
+                resolve(null);
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function confirmerImport() {
+        if(confirm("Souhaitez-vous sélectionner une nouvelle image de signature pour le PDG ?")) {
+            document.getElementById('sigPDGInput').click();
+        }
+    }
+
+    function ajouterUtilisateurListe() {
+        const u = document.getElementById('userName').value;
+        const p = document.getElementById('userPass').value;
+        if(!u || !p) return alert("Veuillez remplir les champs utilisateur.");
+        
+        if(confirm(`Voulez-vous vraiment ajouter l'utilisateur "${u}" ?`)) {
+            tempUsers.push({ id: u, pass: p });
+            document.getElementById('userName').value = "";
+            document.getElementById('userPass').value = "";
+            afficherUsers();
+        }
+    }
+
+    async function ajouterProprioListe() {
+        const name = document.getElementById('proprioName').value.trim();
+        const tel = document.getElementById('proprioTel').value.trim();
+        const appartsText = document.getElementById('appartNames').value.trim();
+        const sigFile = document.getElementById('proprioSigInput');
+        const editIdx = parseInt(document.getElementById('editProprioIndex').value);
+
+        if(!name) return alert("Veuillez saisir un nom de propriétaire.");
+        
+        const apparts = appartsText ? appartsText.split(',').map(s => s.trim()).filter(s => s !== "") : [];
+        let signatureBase64 = null;
+        
+        if (sigFile.files && sigFile.files[0]) {
+            signatureBase64 = await encodeImageFileAsURL(sigFile);
+        } else if (editIdx !== -1) {
+            signatureBase64 = tempProprios[editIdx].signature;
+        }
+
+        if (editIdx === -1) {
+            if(confirm(`Voulez-vous ajouter le propriétaire "${name}" ?`)) {
+                tempProprios.push({ nom: name, tel: tel, appartements: apparts, signature: signatureBase64 });
+            }
+        } else {
+            if(confirm(`Voulez-vous modifier le propriétaire "${name}" ?`)) {
+                tempProprios[editIdx] = { nom: name, tel: tel, appartements: apparts, signature: signatureBase64 };
+                document.getElementById('editProprioIndex').value = "-1";
+                document.getElementById('btnAddProprio').textContent = "Ajouter";
+                document.getElementById('btnAddProprio').className = "btn btn-success w-100";
+            }
+        }
+
+        document.getElementById('proprioName').value = "";
+        document.getElementById('proprioTel').value = "";
+        document.getElementById('appartNames').value = "";
+        document.getElementById('proprioSigInput').value = "";
+        afficherProprios();
+        document.getElementById('containerListeProprios').style.display = 'block';
+    }
+
+    function reinitialiserSysteme() {
+        if(confirm("ATTENTION : Cette action va réinitialiser le système.\nContinuer ?")) {
+            const defaultParams = {
+                pdgNom: "Atizoun Plateny AMOUSSOU",
+                adminPass: "admin2025",
+                pdgSig: null,
+                societeTel: "01 97 74 40 35",
+                societeEmail: "atizoun@gmail.com"
+            };
+            localStorage.setItem('smartloc_params', JSON.stringify(defaultParams));
+            localStorage.setItem('smartloc_users', JSON.stringify([{ id: "admin", pass: "admin2025" }]));
+            localStorage.setItem('smartloc_proprios', JSON.stringify([]));
+            location.reload();
+        }
+    }
+
+    document.getElementById('formGlobalParametres').onsubmit = async function(e) {
+      e.preventDefault();
+      
+      if (isLocked) {
+          if(confirm("Voulez-vous déverrouiller le formulaire pour effectuer des modifications ?")) {
+              deverrouillerFormulaire();
+          }
+          return;
+      }
+
+      if(!confirm("Voulez-vous enregistrer définitivement ces paramètres et verrouiller le formulaire ?")) {
+          return;
+      }
+
+      let params = JSON.parse(localStorage.getItem('smartloc_params')) || {};
+      params.pdgNom = document.getElementById('nomPDG').value;
+      params.adminPass = document.getElementById('adminPass').value;
+      
+      if(currentSignatureBase64) params.pdgSig = currentSignatureBase64;
+      
+      params.societeTel = document.getElementById('telSociete').value;
+      params.societeEmail = document.getElementById('emailSociete').value;
+      
+      localStorage.setItem('smartloc_params', JSON.stringify(params));
+      localStorage.setItem('smartloc_users', JSON.stringify(tempUsers));
+      localStorage.setItem('smartloc_proprios', JSON.stringify(tempProprios));
+      
+      verrouillerLectureSeule();
+      chargerParams();
+      showAlert("✓ Tout a été sauvegardé !");
+    };
+
+    function verrouillerLectureSeule() {
+        isLocked = true;
+        const inputs = document.querySelectorAll('#formGlobalParametres input:not([type="file"])');
+        inputs.forEach(input => {
+            input.readOnly = true;
+            input.classList.add('locked-highlight');
+        });
+        
+        document.getElementById('btnImportSig').style.display = 'none';
+        document.getElementById('btnActionImport').style.display = 'none';
+        document.getElementById('sectionAjoutUser').style.display = 'none';
+        document.getElementById('sectionAjoutProprio').style.display = 'none';
+        
+        document.querySelectorAll('.btn-remove, .btn-edit').forEach(btn => btn.style.display = 'none');
+
+        const btn = document.getElementById('btnMainAction');
+        btn.innerHTML = "🔓 Déverrouiller";
+        btn.classList.add('btn-unlock');
+    }
+
+    function deverrouillerFormulaire() {
+        isLocked = false;
+        const inputs = document.querySelectorAll('#formGlobalParametres input:not([type="file"])');
+        inputs.forEach(input => {
+            input.readOnly = false;
+            input.classList.remove('locked-highlight');
+        });
+        
+        document.getElementById('btnImportSig').style.display = 'block';
+        document.getElementById('btnActionImport').style.display = 'inline-block';
+        document.getElementById('sectionAjoutUser').style.display = 'flex';
+        document.getElementById('sectionAjoutProprio').style.display = 'flex';
+        
+        document.querySelectorAll('.btn-remove, .btn-edit').forEach(btn => btn.style.display = 'inline-block');
+
+        const btn = document.getElementById('btnMainAction');
+        btn.innerHTML = "💾 Enregistrer tout";
+        btn.classList.remove('btn-unlock');
+    }
+
+    function chargerParams() {
+      const params = JSON.parse(localStorage.getItem('smartloc_params')) || {};
+      tempUsers = JSON.parse(localStorage.getItem('smartloc_users')) || [];
+      tempProprios = JSON.parse(localStorage.getItem('smartloc_proprios')) || [];
+
+      document.getElementById('nomPDG').value = params.pdgNom || "";
+      document.getElementById('adminPass').value = params.adminPass || "";
+      
+      const img = document.getElementById('previewSigPDG');
+      if(params.pdgSig) {
+        currentSignatureBase64 = params.pdgSig;
+        img.src = params.pdgSig;
+        img.style.display = 'block';
+      } else {
+        currentSignatureBase64 = null;
+        img.style.display = 'none';
+      }
+
+      document.getElementById('telSociete').value = params.societeTel || "";
+      document.getElementById('emailSociete').value = params.societeEmail || "";
+      
+      afficherUsers();
+      afficherProprios();
+    }
+
+    function afficherProprios() {
+      const cont = document.getElementById('listeProprios');
+      cont.innerHTML = '<h5>Liste des Propriétaires et leurs Biens</h5>';
+      
+      if(tempProprios.length === 0) {
+        cont.innerHTML += '<p class="text-muted small">Aucun enregistrement.</p>';
+        return;
+      }
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'table-responsive';
+      const table = document.createElement('table');
+      table.className = 'table table-bordered bg-white align-middle';
+      table.innerHTML = '<thead class="table-light"><tr><th>Propriétaire</th><th>Infos</th><th>Appartements</th><th>Sig</th><th>Action</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+      
+      tempProprios.forEach((p, index) => {
+        const tr = document.createElement('tr');
+        const listeApparts = (p.appartements && p.appartements.length > 0) ? p.appartements.join(', ') : 'Aucun';
+        const sigImg = p.signature ? `<img src="${p.signature}" class="proprio-sig-mini">` : '<span class="text-muted small">N/A</span>';
+        
+        tr.innerHTML = `
+            <td class="fw-bold text-primary ${isLocked ? 'locked-highlight' : ''}">${p.nom}</td>
+            <td class="small">${p.tel || '---'}</td>
+            <td class="small italic text-muted">${listeApparts}</td>
+            <td>${sigImg}</td>
+            <td>
+                <div class="d-flex gap-1">
+                    <button type="button" class="btn btn-sm btn-warning btn-edit" onclick="editProprio(${index})">Modifier</button>
+                    <button type="button" class="btn btn-sm btn-danger btn-remove" onclick="deleteProprio(${index})">Retirer</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      wrapper.appendChild(table);
+      cont.appendChild(wrapper);
+      
+      if(isLocked) {
+          cont.querySelectorAll('.btn-remove, .btn-edit').forEach(btn => btn.style.display = 'none');
+      }
+    }
+
+    function editProprio(idx) {
+        const p = tempProprios[idx];
+        document.getElementById('proprioName').value = p.nom;
+        document.getElementById('proprioTel').value = p.tel || "";
+        document.getElementById('appartNames').value = p.appartements ? p.appartements.join(', ') : "";
+        document.getElementById('editProprioIndex').value = idx;
+        document.getElementById('btnAddProprio').textContent = "Mettre à jour";
+        document.getElementById('btnAddProprio').className = "btn btn-info w-100";
+        window.scrollTo(0, document.getElementById('sectionAjoutProprio').offsetTop - 150);
+    }
+
+    function afficherUsers() {
+      const cont = document.getElementById('listeUsers');
+      cont.innerHTML = '<h5>Utilisateurs enregistrés</h5>';
+      
+      if(tempUsers.length === 0) {
+        cont.innerHTML += '<p class="text-muted small">Aucun utilisateur.</p>';
+        return;
+      }
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'table-responsive';
+      const table = document.createElement('table');
+      table.className = 'table table-bordered bg-white';
+      table.innerHTML = '<thead class="table-light"><tr><th>Identifiant</th><th>Mot de passe</th><th>Action</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+      
+      tempUsers.forEach((u, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="fw-bold text-primary ${isLocked ? 'locked-highlight' : ''}">${u.id}</td>
+            <td><code class="text-danger">${u.pass}</code></td>
+            <td><button type="button" class="btn btn-sm btn-danger btn-remove" onclick="deleteUser(${index})">Retirer</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      wrapper.appendChild(table);
+      cont.appendChild(wrapper);
+      
+      if(isLocked) {
+          cont.querySelectorAll('.btn-remove').forEach(btn => btn.style.display = 'none');
+      }
+    }
+
+    function deleteUser(idx) {
+      if(confirm("Voulez-vous vraiment retirer cet utilisateur ?")) {
+        tempUsers.splice(idx, 1);
+        afficherUsers();
+      }
+    }
+
+    function deleteProprio(idx) {
+      if(confirm("Voulez-vous vraiment retirer ce propriétaire ?")) {
+        tempProprios.splice(idx, 1);
+        afficherProprios();
+      }
+    }
+  </script>
+
+<script src="pwa-setup.js"></script>
+<script src="synchronisation.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof SmartLocSync !== 'undefined') {
+      SmartLocSync.initialiser();
+    }
+    const session = JSON.parse(localStorage.getItem('smartloc_session'));
+    if (session && session.role === 'admin' && typeof verifierEtNotifierProblemes === 'function') {
+      setTimeout(() => verifierEtNotifierProblemes(), 500);
+    }
+  });
+</script>
+<script src="initialisation.js"></script>
+</body>
+</html>

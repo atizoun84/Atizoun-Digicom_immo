@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartLoc – Saisie des paiements</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003366">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/609/609803.png">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  
+  <style>
+    body { 
+      background-color: #f0f2f5; 
+      font-family: 'Segoe UI', sans-serif; 
+      padding-top: 140px; 
+      padding-bottom: 40px;
+      min-height: 100vh;
+    }
+    h2 { color: #003366; font-weight: 600; }
+    .form-label { font-weight: 500; color: #003366; }
+    .btn-primary { background-color: #003366; border: none; }
+    .navbar { 
+      background-color: #003366; 
+      padding-top: 15px; 
+      padding-bottom: 15px; 
+      z-index: 1050; 
+    }
+    .navbar-brand, .nav-link { color: white !important; }
+    .navbar-date { color: #ffcc00; font-weight: bold; font-size: 0.9rem; }
+    .nav-images { display: flex; align-items: center; gap: 15px; margin-right: 15px; }
+    .nav-logo, .nav-timbre { 
+      max-height: 85px; 
+      width: auto; 
+      object-fit: contain; 
+      background-color: rgba(255, 255, 255, 0.1); 
+      border-radius: 4px;
+    }
+    .info-recuperee { color: #0099ff !important; font-weight: bold !important; font-family: 'Tahoma', sans-serif !important; }
+    #montantRetards { color: #dc3545 !important; font-weight: bold !important; background-color: #fff5f5; }
+    .recu-pro-container { 
+      border: 2px double #003366; 
+      padding: 20px; 
+      background: #fff; 
+      color: #000; 
+      max-width: 800px; 
+      margin: auto; 
+    }
+    .recu-header { border-bottom: 2px solid #003366; margin-bottom: 15px; padding-bottom: 10px; }
+    .option-paye { color: #0099ff !important; font-weight: bold; }
+    .option-retard { color: #dc3545 !important; font-weight: bold; }
+    #printArea { display: none; }
+    @media print {
+        body > *:not(#printArea) { display: none !important; }
+        #printArea { 
+          display: block !important; 
+          position: absolute; 
+          left: 0; 
+          top: 0; 
+          width: 100%; 
+          background: white;
+        }
+    }
+    @media (max-width: 576px) { 
+      body { padding-top: 130px; } 
+      .nav-logo, .nav-timbre { max-height: 50px; } 
+    }
+    .success-overlay { 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: rgba(255,255,255,0.9); 
+      z-index: 10000; 
+      display: none; 
+      align-items: center; 
+      justify-content: center; 
+      flex-direction: column; 
+    }
+    .success-icon { font-size: 80px; color: #198754; }
+    .error-message {
+      position: fixed;
+      top: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #dc3545;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      z-index: 10000;
+      display: none;
+    }
+    .admin-only { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div id="successOverlay" class="success-overlay">
+      <div class="success-icon">✅</div>
+      <h3 class="text-success mt-3">Paiement enregistré !</h3>
+  </div>
+  
+  <div id="errorMessage" class="error-message"></div>
+  <div id="printArea"></div>
+
+  <nav class="navbar fixed-top navbar-expand-lg">
+    <div class="container-fluid">
+      <div class="nav-images">
+        <img src="logo.png" alt="Logo" class="nav-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/609/609803.png';">
+        <img src="timbre.png" alt="Timbre" class="nav-timbre" onerror="this.src='https://cdn-icons-png.flaticon.com/512/609/609803.png';">
+      </div>
+      <a class="navbar-brand fw-bold fs-3" href="#">SmartLoc <span id="navbarDate" class="ms-3 navbar-date"></span></a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Tableau de bord</a></li>
+          <li class="nav-item admin-only"><a class="nav-link" href="config.html">Configuration</a></li>
+          <li class="nav-item"><a class="nav-link active" href="gestion.html">Gestion</a></li>
+          <li class="nav-item"><a class="nav-link" href="reparation.html">Réparations</a></li>
+          <li class="nav-item ms-lg-3"><span id="userNameDisplay" class="nav-link fw-bold text-warning"></span></li>
+          <li class="nav-item"><button onclick="deconnexion()" class="btn btn-outline-danger btn-sm text-white ms-lg-3">🚪 Déconnexion</button></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h2 class="text-center mb-4">💳 Gestion des Paiements</h2>
+    <div class="row mb-4">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">👤 Filtrer par Propriétaire</label>
+        <select id="selectProprietaire" class="form-select" onchange="filtrerAppartementsParProprio()"></select>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label">🏢 Sélectionner un appartement</label>
+        <select id="selectAppartement" class="form-select" onchange="afficherDetailsAppartement()"></select>
+      </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3"><label class="form-label">👤 Propriétaire</label><input type="text" id="nomProprietaireAffichage" class="form-control info-recuperee" readonly /></div>
+        <div class="col-md-3 mb-3"><label class="form-label">📞 Contact</label><input type="text" id="contactProprietaireAffichage" class="form-control info-recuperee" readonly /></div>
+        <div class="col-md-3 mb-3"><label class="form-label">📍 Localisation</label><input type="text" id="localisationAffichage" class="form-control info-recuperee" readonly /></div>
+        <div class="col-md-3 mb-3"><label class="form-label">💰 Loyer (FCFA)</label><input type="number" id="coutMensuelAffichage" class="form-control info-recuperee" readonly /></div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">📅 Mois à payer</label>
+          <select id="mois" class="form-select" multiple size="8" onchange="calculerCumul()"></select>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">💰 Déjà Payé (Total)</label>
+            <input type="text" id="montantCumulePaye" class="form-control" readonly />
+            <label class="form-label mt-3">🚨 Total des Retards</label>
+            <input type="text" id="montantRetards" class="form-control" readonly />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">💵 Montant Sélectionné</label>
+            <input type="number" id="montant" class="form-control" readonly style="color: #006400; font-weight: bold;" />
+            <label class="form-label mt-3">📝 Observation</label>
+            <input type="text" id="observation" class="form-control" placeholder="Mois de ... payé par ..." />
+        </div>
+    </div>
+
+    <div class="d-grid gap-2 mt-4">
+      <button onclick="validerPaiement()" class="btn btn-success btn-lg">Valider le Paiement</button>
+      <button id="toggleHistoriqueBtn" class="btn btn-outline-secondary" onclick="toggleHistorique()">Afficher l'historique</button>
+    </div>
+
+    <div class="modal fade" id="modalRecu" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0"><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body" id="recuContent"></div>
+                <div class="modal-footer border-0 pt-0">
+                  <button class="btn btn-primary w-100" onclick="imprimerRecuDepuisModale()">🖨️ Imprimer le reçu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="historiqueSection" style="display:none;" class="mt-4">
+      <h4 class="text-primary">📋 Historique des paiements de cet appartement</h4>
+      <div class="table-responsive">
+          <table class="table table-bordered table-striped">
+              <thead>
+                  <tr>
+                      <th>Mois</th>
+                      <th>Montant</th>
+                      <th>Type</th>
+                      <th>Observation</th>
+                      <th>Action</th>
+                  </tr>
+              </thead>
+              <tbody id="historiquePaiements"></tbody>
+          </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Variables globales
+    const selectAppartement = document.getElementById('selectAppartement');
+    const selectProprietaire = document.getElementById('selectProprietaire');
+    const coutMensuelAffichage = document.getElementById('coutMensuelAffichage');
+    const moisInput = document.getElementById('mois');
+    const montantInput = document.getElementById('montant');
+    const montantRetardsDisplay = document.getElementById('montantRetards');
+    const navbarDate = document.getElementById('navbarDate');
+    let modalRecu = null;
+    
+    function showError(message) {
+      const errorEl = document.getElementById('errorMessage');
+      if(errorEl) {
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+        setTimeout(() => { errorEl.style.display = 'none'; }, 5000);
+      } else { alert(message); }
+    }
+
+    // --- INITIALISATION SÉCURISÉE POUR GITHUB PAGES ---
+    function init() {
+      try {
+        const sessionData = localStorage.getItem('smartloc_session');
+        if (!sessionData) {
+          window.location.href = 'login.html';
+          return;
+        }
+        const session = JSON.parse(sessionData);
+
+        // Affichage Admin / Utilisateur
+        const userDisplay = document.getElementById('userNameDisplay');
+        if(userDisplay) userDisplay.textContent = `${session.role.toUpperCase()} : ${session.nom}`;
+        
+        if (session.role === 'admin') {
+          document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.setProperty('display', 'block', 'important');
+          });
+        }
+        
+        const modalElement = document.getElementById('modalRecu');
+        if (modalElement && typeof bootstrap !== 'undefined') {
+          modalRecu = new bootstrap.Modal(modalElement);
+        }
+        
+        chargerFiltreProprietaire();
+        chargerAppartements();
+        mettreAJourNavbarDate();
+      } catch (e) {
+        console.error("Erreur d'initialisation:", e);
+      }
+    }
+
+    function deconnexion() { 
+      localStorage.removeItem('smartloc_session'); 
+      window.location.href = 'login.html'; 
+    }
+
+    function actualiserCalculRetards(idx, dateEntree, loyer) {
+        if (!dateEntree || !loyer) {
+            montantRetardsDisplay.value = "0 FCFA (0 mois)";
+            return;
+        }
+        try {
+          const paiementsMap = JSON.parse(localStorage.getItem('paiements')) || {};
+          const paiements = paiementsMap[idx] || [];
+          const now = new Date();
+          const moisActuelStr = now.toISOString().slice(0, 7); 
+          let total = 0, nb = 0;
+          let d = new Date(dateEntree.split('-')[0], parseInt(dateEntree.split('-')[1]) - 1, 1);
+          while (d.toISOString().slice(0, 7) < moisActuelStr) {
+              const m = d.toISOString().slice(0, 7);
+              const estPaye = paiements.some(p => p.mois === m && (p.type === 'Paiement' || p.type === 'Avance'));
+              if (!estPaye) { total += parseFloat(loyer); nb++; }
+              d.setMonth(d.getMonth() + 1);
+          }
+          montantRetardsDisplay.value = `${total.toLocaleString()} FCFA (${nb} mois)`;
+        } catch (error) { montantRetardsDisplay.value = "0 FCFA (erreur)"; }
+    }
+
+    function chargerFiltreProprietaire() {
+        const proprios = JSON.parse(localStorage.getItem('smartloc_proprios')) || [];
+        if(selectProprietaire) {
+          selectProprietaire.innerHTML = '<option value="">-- Tous les propriétaires --</option>';
+          proprios.forEach(p => { 
+            const opt = document.createElement('option'); 
+            opt.value = p.nom; opt.textContent = p.nom; 
+            selectProprietaire.appendChild(opt); 
+          });
+        }
+    }
+
+    function filtrerAppartementsParProprio() { chargerAppartements(); }
+
+    function chargerAppartements() {
+      const data = JSON.parse(localStorage.getItem('appartements')) || [];
+      const filtre = selectProprietaire ? selectProprietaire.value : "";
+      if(selectAppartement) {
+        selectAppartement.innerHTML = '<option value="">-- Sélectionner un appartement --</option>';
+        data.forEach((apt, index) => { 
+          if (!filtre || apt.proprietaireNom === filtre) {
+            const opt = document.createElement('option'); opt.value = index; 
+            opt.textContent = `${apt.nom} - ${apt.locataire}`;
+            selectAppartement.appendChild(opt);
+          }
+        });
+      }
+    }
+
+    function afficherDetailsAppartement() {
+        const idx = selectAppartement.value;
+        if (idx === "") return;
+        const data = JSON.parse(localStorage.getItem('appartements')) || [];
+        const a = data[idx];
+        if (!a) return;
+        document.getElementById('nomProprietaireAffichage').value = a.proprietaireNom || "N/A";
+        document.getElementById('contactProprietaireAffichage').value = a.proprietaireContact || "N/A";
+        document.getElementById('localisationAffichage').value = `${a.ville || ''} / ${a.quartier || ''}`;
+        coutMensuelAffichage.value = a.cout || 0;
+        const paiements = (JSON.parse(localStorage.getItem('paiements')) || {})[idx] || [];
+        const cumul = paiements.reduce((acc, p) => acc + (p.type === 'Paiement' ? p.montant : 0), 0);
+        document.getElementById('montantCumulePaye').value = `${cumul.toLocaleString()} FCFA`;
+        actualiserCalculRetards(idx, a.dateEntree || a.dateIntegration, a.cout);
+        genererListeMois(a.dateEntree || a.dateIntegration, idx);
+        if(document.getElementById('historiqueSection').style.display === 'block') chargerHistorique();
+    }
+
+    function genererListeMois(dateIn, idx) {
+        if(!moisInput) return;
+        moisInput.innerHTML = '';
+        if (!dateIn) return;
+        const paiements = (JSON.parse(localStorage.getItem('paiements')) || {})[idx] || [];
+        let start = new Date(dateIn.split('-')[0], parseInt(dateIn.split('-')[1])-1, 1);
+        for (let i = 0; i < 600; i++) {
+            const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+            const val = d.toISOString().slice(0, 7);
+            const opt = document.createElement('option'); opt.value = val;
+            opt.textContent = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase();
+            if (paiements.find(p => p.mois === val && p.type === 'Paiement')) { 
+              opt.disabled = true; opt.className = "option-paye"; opt.textContent += " (PAYÉ)"; 
+            }
+            moisInput.appendChild(opt);
+        }
+    }
+
+    function calculerCumul() { 
+      if(montantInput) montantInput.value = Array.from(moisInput.selectedOptions).length * (parseFloat(coutMensuelAffichage.value) || 0); 
+    }
+
+    function validerPaiement() {
+        const idx = selectAppartement.value;
+        const moisS = Array.from(moisInput.selectedOptions);
+        if (!idx || !moisS.length) { showError('Sélectionnez un appartement et au moins un mois'); return; }
+        const p = JSON.parse(localStorage.getItem('paiements')) || {}; 
+        if (!p[idx]) p[idx] = [];
+        moisS.forEach(o => {
+          p[idx].push({ 
+              id: Date.now() + Math.random(), mois: o.value, montant: parseFloat(coutMensuelAffichage.value), 
+              type: 'Paiement', observation: document.getElementById('observation').value || "Paiement de loyer",
+              dateEnregistrement: new Date().toISOString() 
+          });
+        });
+        localStorage.setItem('paiements', JSON.stringify(p));
+        document.getElementById('successOverlay').style.display = 'flex';
+        setTimeout(() => { 
+            document.getElementById('successOverlay').style.display = 'none'; 
+            afficherRecu(idx, p[idx][p[idx].length - 1].id);
+            afficherDetailsAppartement(); 
+        }, 800);
+    }
+
+    function afficherRecu(aptIdx, payId) {
+        const apt = (JSON.parse(localStorage.getItem('appartements')) || [])[aptIdx];
+        const pay = ((JSON.parse(localStorage.getItem('paiements')) || {})[aptIdx] || []).find(x => x.id == payId);
+        const dateNow = new Date().toLocaleString('fr-FR');
+        document.getElementById('recuContent').innerHTML = `
+            <div class="recu-pro-container" id="printableRecu">
+                <div class="d-flex justify-content-between align-items-center recu-header">
+                    <img src="logo.png" style="height:50px;" onerror="this.style.display='none'">
+                    <div class="text-center"><h5 class="mb-0">REÇU DE PAIEMENT</h5><small>N° ${Math.floor(pay.id/100000)}</small></div>
+                    <img src="timbre.png" style="height:50px;" onerror="this.style.display='none'">
+                </div>
+                <p class="mt-3">L'an deux mil sept et le <b>${dateNow}</b> à ${apt.ville || 'Non spécifié'}</p>
+                <p><b>Locataire :</b> ${apt.locataire}<br><b>Bien :</b> ${apt.nom}<br><b>Mois :</b> ${pay.mois}<br><b>Montant :</b> ${pay.montant.toLocaleString()} FCFA</p>
+                <div class="d-flex justify-content-between mt-4"><span>Signature Locataire</span><span><b>Direction SmartLoc</b></span></div>
+                ${apt.signatureProprio ? `<div class="text-end"><img src="${apt.signatureProprio}" style="max-height:60px;"></div>` : ''}
+            </div>`;
+        if (modalRecu) modalRecu.show();
+    }
+
+    function imprimerRecuDepuisModale() {
+        document.getElementById('printArea').innerHTML = document.getElementById('recuContent').innerHTML;
+        window.print();
+    }
+
+    function toggleHistorique() {
+        const sect = document.getElementById('historiqueSection');
+        sect.style.display = (sect.style.display === 'none') ? 'block' : 'none';
+        if(sect.style.display === 'block') chargerHistorique();
+    }
+
+    function chargerHistorique() {
+        const idx = selectAppartement.value;
+        if (idx === "") return;
+        const p = ((JSON.parse(localStorage.getItem('paiements')) || {})[idx] || []);
+        const body = document.getElementById('historiquePaiements');
+        const session = JSON.parse(localStorage.getItem('smartloc_session') || '{}');
+        const canDelete = session && session.role === 'admin';
+        
+        body.innerHTML = p.map((x, i) => `
+            <tr>
+                <td>${x.mois || 'N/A'}</td>
+                <td>${(x.montant || 0).toLocaleString()} FCFA</td>
+                <td>${x.type || 'Paiement'}</td>
+                <td><small>${x.observation || ''}</small></td>
+                <td>${canDelete ? `<button class="btn btn-sm btn-danger" onclick="supprimerPaiement('${idx}', ${i})">Supprimer</button>` : '<span class="badge bg-secondary">🔒</span>'}</td>
+            </tr>`).join('');
+    }
+
+    function supprimerPaiement(aptIdx, payIdx) {
+        if(!confirm("Supprimer ce paiement ?")) return;
+        let p = JSON.parse(localStorage.getItem('paiements')) || {};
+        if (p[aptIdx]) {
+          p[aptIdx].splice(payIdx, 1);
+          localStorage.setItem('paiements', JSON.stringify(p));
+          afficherDetailsAppartement();
+        }
+    }
+
+    function mettreAJourNavbarDate() {
+        if (navbarDate) navbarDate.textContent = `| ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+    }
+    
+    // --- Lancement propre ---
+    window.addEventListener('load', init);
+
+    // --- PWA ---
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js').catch(e => console.log('SW fail', e));
+      });
+    }
+  </script>
+  
+  <script src="synchronisation.js" onerror="console.warn('Sync script non trouvé')"></script>
+  <script src="initialisation.js" onerror="console.warn('Init script non trouvé')"></script>
+</body>
+</html>

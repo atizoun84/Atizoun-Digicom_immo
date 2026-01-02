@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SmartLoc – Configuration</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003366">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SmartLoc">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/609/609803.png">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f0f2f5;
+      font-family: 'Segoe UI', sans-serif;
+      color: #333;
+      padding-top: 120px;
+    }
+    h2 {
+      color: #003366;
+      font-weight: 600;
+    }
+    .form-label {
+      font-weight: 500;
+      color: #003366;
+    }
+    .btn-primary {
+      background-color: #003366;
+      border: none;
+    }
+    .btn-primary:hover {
+      background-color: #00509e;
+    }
+    .card {
+      border-left: 5px solid #003366;
+      margin-top: 10px;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 0.9em;
+      text-align: center;
+      color: #666;
+    }
+    .navbar {
+      background-color: #003366;
+      padding-top: 15px;
+      padding-bottom: 15px;
+    }
+    .navbar-brand, .nav-link {
+      color: white !important;
+    }
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+    .signature-preview {
+      max-width: 150px;
+      max-height: 80px;
+      border: 1px dashed #ccc;
+      margin-top: 5px;
+      display: block;
+    }
+    .nav-images {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-right: 15px;
+      flex-wrap: nowrap;
+    }
+    .nav-logo, .nav-timbre {
+      height: auto;
+      max-height: 85px;
+      width: auto;
+      max-width: 25vw;
+      object-fit: contain;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      padding: 2px;
+    }
+    @media (max-width: 576px) {
+      body { padding-top: 100px; }
+      .nav-logo, .nav-timbre { max-height: 50px; }
+      .navbar-brand { font-size: 1.2rem !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar fixed-top navbar-expand-lg">
+    <div class="container-fluid">
+      <div class="nav-images">
+        <img src="logo.png" alt="Logo" class="nav-logo">
+        <img src="timbre.png" alt="Timbre" class="nav-timbre">
+      </div>
+      <a class="navbar-brand fw-bold fs-3" href="#">SmartLoc</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon bg-light"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Tableau de bord</a></li>
+          <li class="nav-item"><a class="nav-link active" href="config.html">Configuration</a></li>
+          <li class="nav-item"><a class="nav-link" href="gestion.html">Gestion</a></li>
+          <li class="nav-item"><a class="nav-link" href="reparation.html">Réparations</a></li>
+          <li class="nav-item"><a class="nav-link" href="comptabilite.html">Comptabilité</a></li>
+          <li class="nav-item"><a class="nav-link" href="parametres.html">Paramètres</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h2 id="titreFormulaire" class="text-center mb-4">🛠️ Configuration des Appartements</h2>
+
+    <form id="formAppartement" class="border p-3 rounded bg-white shadow-sm">
+      <input type="hidden" id="editIndex" value="-1">
+      
+      <div class="card mb-4 border-0 bg-light p-2">
+        <h5 class="text-primary">👤 Choix du Propriétaire</h5>
+        <div class="mb-3">
+          <label class="form-label">🔑 Sélectionner le propriétaire</label>
+          <select id="proprietaireSelect" class="form-select" onchange="remplirInfosProprio()" required>
+            <option value="">-- Choisir dans la liste --</option>
+          </select>
+          <div id="proprioDetails" class="mt-2 small text-muted" style="display:none;">
+             Contact: <span id="proprioContactTxt"></span> | Signature chargée ✅
+             <img id="proprioSigPreview" class="signature-preview d-none">
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">🏢 Nom de l'appartement</label>
+          <select id="nom" class="form-select" required>
+             <option value="">-- Choisir un bien --</option>
+          </select>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">📅 Date d'intégration</label>
+          <input type="date" id="date" class="form-control" required>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">🏙️ Ville / Village</label>
+            <input type="text" id="ville" class="form-control" placeholder="Ex: Cotonou" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">📍 Quartier</label>
+            <input type="text" id="quartier" class="form-control" placeholder="Ex: Akpakpa" required>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">💰 Coût mensuel (FCFA)</label>
+          <input type="number" id="cout" class="form-control" required>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">💵 Avance sur loyer (FCFA)</label>
+          <input type="number" id="avance" class="form-control" required>
+        </div>
+      </div>
+      
+      <div class="mb-3">
+        <label class="form-label">👤 Nom du locataire</label>
+        <input type="text" id="locataire" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">📞 Téléphone du locataire</label>
+        <input type="tel" id="telephone" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">✍️ Signature du locataire (PNG)</label>
+        <input type="file" id="signatureLocataire" class="form-control" accept="image/png">
+        <div id="locataireSigPreviewContainer" class="mt-2" style="display:none;">
+            <small>Signature actuelle :</small>
+            <img id="locataireSigPreview" class="signature-preview">
+        </div>
+      </div>
+
+      <input type="hidden" id="proprietaireNom">
+      <input type="hidden" id="proprietaireContact">
+      <input type="hidden" id="signatureProprioBase64">
+      <input type="hidden" id="countChangement" value="0">
+
+      <div class="d-grid gap-2">
+        <button type="submit" id="btnSubmit" class="btn btn-primary btn-lg">Ajouter l'appartement & Locataire</button>
+        <button type="button" id="btnCancel" class="btn btn-secondary" style="display:none;" onclick="resetConfigurationForm()">Annuler la modification</button>
+      </div>
+    </form>
+
+    <div class="d-flex gap-2 flex-wrap">
+        <button id="toggleListe" class="btn btn-outline-primary mt-4">Afficher les appartements</button>
+    </div>
+    
+    <div id="listeAppartements" class="mt-3" style="display: none;"></div>
+
+    <hr class="mt-5">
+    <div class="card bg-light border-0 shadow-sm mb-4">
+        <div class="card-body text-center">
+            <h5 class="card-title text-primary">💾 Sauvegarde des données</h5>
+            <p class="small text-muted">Téléchargez vos données au format JSON pour les conserver en sécurité.</p>
+            <div class="d-flex gap-2 justify-content-center flex-wrap">
+                <button onclick="exporterDonnees()" class="btn btn-success btn-lg px-4">Sauvegarder en JSON</button>
+                <button onclick="document.getElementById('importFile').click()" class="btn btn-outline-warning btn-lg px-4">Restaurer un fichier JSON</button>
+                <input type="file" id="importFile" style="display:none" accept=".json" onchange="importerDonnees(this)">
+            </div>
+        </div>
+    </div>
+
+    <footer>
+      Conçu par <strong>Plateny AMOUSSOU</strong> – Professeur & Innovateur local<br>
+      📧 atizoun@gmail.com | 📞 01 97 74 40 35
+    </footer>
+  </div>
+
+  <div class="modal fade" id="modalHistorique" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title">📜 Historique des locataires</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="contenuHistorique" class="list-group"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalDetailLocataire" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content border-primary">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">👤 Détails de l'ancien locataire</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="corpsDetailLocataire"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const form = document.getElementById('formAppartement');
+    const liste = document.getElementById('listeAppartements');
+    const toggleBtn = document.getElementById('toggleListe');
+    const modalHist = new bootstrap.Modal(document.getElementById('modalHistorique'));
+    const modalDetail = new bootstrap.Modal(document.getElementById('modalDetailLocataire'));
+
+    function chargerListeProprios() {
+        const proprios = JSON.parse(localStorage.getItem('smartloc_proprios')) || [];
+        const select = document.getElementById('proprietaireSelect');
+        select.innerHTML = '<option value="">-- Choisir dans la liste --</option>';
+        proprios.forEach((p, index) => {
+            const opt = document.createElement('option');
+            opt.value = index;
+            opt.textContent = p.nom;
+            select.appendChild(opt);
+        });
+    }
+
+    function remplirInfosProprio(nomAptSelectionne = "") {
+        const index = document.getElementById('proprietaireSelect').value;
+        const proprios = JSON.parse(localStorage.getItem('smartloc_proprios')) || [];
+        const aptSelect = document.getElementById('nom');
+        const detailsDiv = document.getElementById('proprioDetails');
+        
+        if (index === "") {
+            detailsDiv.style.display = 'none';
+            aptSelect.innerHTML = '<option value="">-- Choisir un bien --</option>';
+            return;
+        }
+
+        const p = proprios[index];
+        detailsDiv.style.display = 'block';
+        
+        // Récupération des données selon la nouvelle structure des paramètres (tel au lieu de contact)
+        const contactInfo = p.tel || p.contact || "N/A";
+        document.getElementById('proprioContactTxt').textContent = contactInfo;
+        document.getElementById('proprietaireNom').value = p.nom;
+        document.getElementById('proprietaireContact').value = contactInfo;
+        document.getElementById('signatureProprioBase64').value = p.signature || "";
+
+        if(p.signature) {
+            document.getElementById('proprioSigPreview').src = p.signature;
+            document.getElementById('proprioSigPreview').classList.remove('d-none');
+        } else {
+            document.getElementById('proprioSigPreview').classList.add('d-none');
+        }
+
+        aptSelect.innerHTML = '<option value="">-- Choisir un bien --</option>';
+        if (p.appartements) {
+            p.appartements.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a;
+                opt.textContent = a;
+                if(a === nomAptSelectionne) opt.selected = true;
+                aptSelect.appendChild(opt);
+            });
+        }
+    }
+
+    function encodeImageFileAsURL(element) {
+        return new Promise((resolve) => {
+            if (!element.files || !element.files[0]) { resolve(null); return; }
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(element.files[0]);
+        });
+    }
+
+    function resetConfigurationForm() {
+        form.reset();
+        document.getElementById('editIndex').value = "-1";
+        document.getElementById('countChangement').value = "0";
+        document.getElementById('titreFormulaire').textContent = "🛠️ Configuration des Appartements";
+        document.getElementById('btnSubmit').textContent = "Ajouter l'appartement & Locataire";
+        document.getElementById('btnCancel').style.display = 'none';
+        document.getElementById('proprioDetails').style.display = 'none';
+        document.getElementById('locataireSigPreviewContainer').style.display = 'none';
+        window.scrollTo(0, 0);
+    }
+
+    function preparerModification(index, modeContrat = false) {
+        const data = JSON.parse(localStorage.getItem('appartements')) || [];
+        const apt = data[index];
+        if(!apt) return;
+
+        window.scrollTo(0, 0);
+        document.getElementById('editIndex').value = index;
+        
+        const proprios = JSON.parse(localStorage.getItem('smartloc_proprios')) || [];
+        // Utilisation de la récupération intelligente basée sur le nom ou l'index sauvegardé
+        let pIndex = apt.proprietaireIndex !== undefined ? apt.proprietaireIndex : proprios.findIndex(p => p.nom === apt.proprietaireNom);
+        
+        if(pIndex !== -1) {
+            document.getElementById('proprietaireSelect').value = pIndex;
+            remplirInfosProprio(apt.nom);
+        }
+
+        document.getElementById('date').value = apt.dateEntree;
+        document.getElementById('ville').value = apt.ville || "";
+        document.getElementById('quartier').value = apt.quartier || "";
+        document.getElementById('cout').value = apt.cout;
+        document.getElementById('avance').value = apt.avance || 0;
+        document.getElementById('locataire').value = apt.locataire;
+        document.getElementById('telephone').value = apt.telephone;
+        document.getElementById('countChangement').value = apt.countChangement || 0;
+
+        if(apt.signatureLocataire) {
+            document.getElementById('locataireSigPreview').src = apt.signatureLocataire;
+            document.getElementById('locataireSigPreviewContainer').style.display = 'block';
+        }
+
+        if(modeContrat) {
+            document.getElementById('titreFormulaire').textContent = "📝 Nouveau Contrat de Location";
+            document.getElementById('btnSubmit').textContent = "Valider le Nouveau Locataire";
+            document.getElementById('countChangement').value = parseInt(apt.countChangement || 0) + 1;
+            // Réinitialiser les champs spécifiques au locataire pour un nouveau contrat
+            document.getElementById('locataire').value = "";
+            document.getElementById('telephone').value = "";
+            document.getElementById('signatureLocataire').value = "";
+            document.getElementById('locataireSigPreviewContainer').style.display = 'none';
+        } else {
+            document.getElementById('titreFormulaire').textContent = "✏️ Modifier l'Appartement";
+            document.getElementById('btnSubmit').textContent = "Enregistrer les modifications";
+        }
+        
+        document.getElementById('btnCancel').style.display = 'inline-block';
+    }
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const index = parseInt(document.getElementById('editIndex').value);
+      const isNewContrat = document.getElementById('btnSubmit').textContent === "Valider le Nouveau Locataire";
+      const sigLocataireInput = document.getElementById('signatureLocataire');
+      const sigLocataire = await encodeImageFileAsURL(sigLocataireInput);
+      
+      let data = JSON.parse(localStorage.getItem('appartements')) || [];
+      
+      let historique = [];
+      if (index !== -1) {
+          historique = data[index].historique || [];
+          if (isNewContrat) {
+              historique.push({
+                  locataire: data[index].locataire,
+                  telephone: data[index].telephone,
+                  dateEntree: data[index].dateEntree,
+                  signature: data[index].signatureLocataire,
+                  dateSortie: new Date().toLocaleDateString()
+              });
+          }
+      }
+
+      const aptObj = {
+        nom: document.getElementById('nom').value,
+        dateEntree: document.getElementById('date').value, 
+        dateIntegration: document.getElementById('date').value,
+        ville: document.getElementById('ville').value || 'Non spécifié',
+        quartier: document.getElementById('quartier').value || 'Non spécifié',
+        cout: parseFloat(document.getElementById('cout').value),
+        avance: parseFloat(document.getElementById('avance').value) || 0,
+        proprietaireNom: document.getElementById('proprietaireNom').value,
+        proprietaireContact: document.getElementById('proprietaireContact').value,
+        signatureProprio: document.getElementById('signatureProprioBase64').value,
+        locataire: document.getElementById('locataire').value,
+        telephone: document.getElementById('telephone').value,
+        signatureLocataire: sigLocataire || (index !== -1 && !isNewContrat ? data[index].signatureLocataire : null),
+        countChangement: parseInt(document.getElementById('countChangement').value),
+        historique: historique,
+        proprietaireIndex: document.getElementById('proprietaireSelect').value
+      };
+
+      if(index === -1) {
+          data.push(aptObj);
+      } else {
+          data[index] = aptObj;
+      }
+
+      localStorage.setItem('appartements', JSON.stringify(data));
+      
+      if (typeof SmartLocSync !== 'undefined') {
+        SmartLocSync.synchroniser();
+      }
+
+      resetConfigurationForm();
+      chargerAppartements();
+      alert("Enregistrement réussi !");
+    });
+
+    function ouvrirHistorique(index) {
+        const data = JSON.parse(localStorage.getItem('appartements')) || [];
+        const hist = data[index].historique || [];
+        const container = document.getElementById('contenuHistorique');
+        container.innerHTML = "";
+
+        if(hist.length === 0) {
+            container.innerHTML = "<p class='text-center p-3'>Aucun ancien locataire enregistré.</p>";
+        } else {
+            hist.forEach((h, i) => {
+                const btn = document.createElement('button');
+                btn.className = "list-group-item list-group-item-action d-flex justify-content-between align-items-center";
+                btn.innerHTML = `<div><strong>${h.locataire}</strong> <br> <small class='text-muted'>Période: ${h.dateEntree} au ${h.dateSortie}</small></div> <span class='badge bg-primary'>Voir détail</span>`;
+                btn.onclick = () => afficherDetailHistorique(index, i);
+                container.appendChild(btn);
+            });
+        }
+        modalHist.show();
+    }
+
+    function afficherDetailHistorique(aptIdx, histIdx) {
+        const data = JSON.parse(localStorage.getItem('appartements')) || [];
+        const h = data[aptIdx].historique[histIdx];
+        const corps = document.getElementById('corpsDetailLocataire');
+        
+        corps.innerHTML = `
+            <p><strong>Nom :</strong> ${h.locataire}</p>
+            <p><strong>Téléphone :</strong> ${h.telephone}</p>
+            <p><strong>Date d'Entrée :</strong> ${h.dateEntree}</p>
+            <p><strong>Date de Sortie :</strong> ${h.dateSortie}</p>
+            <hr>
+            <p><strong>Signature :</strong></p>
+            ${h.signature ? `<img src="${h.signature}" class="img-fluid border p-2 bg-white" style="max-height:150px">` : '<em>Aucune signature enregistrée</em>'}
+        `;
+        modalDetail.show();
+    }
+
+    function chargerAppartements() {
+      const data = JSON.parse(localStorage.getItem('appartements')) || [];
+      liste.innerHTML = '';
+      data.forEach((apt, index) => {
+        const card = document.createElement('div');
+        card.className = 'card shadow-sm mb-3';
+        const imgProprio = apt.signatureProprio ? `<img src="${apt.signatureProprio}" class="signature-preview">` : '<span class="text-muted small">Aucune</span>';
+        const imgLocataire = apt.signatureLocataire ? `<img src="${apt.signatureLocataire}" class="signature-preview">` : '<span class="text-muted small">Aucune</span>';
+        
+        const badgeChangement = apt.countChangement > 0 ? 
+            `<button class="btn badge bg-warning text-dark ms-2 border-0" onclick="ouvrirHistorique(${index})">🔄 ${apt.countChangement} locataire(s) précédent(s)</button>` : '';
+
+        card.innerHTML = `
+          <div class="card-body">
+            <h5 class="card-title text-primary">${apt.nom} | ${apt.proprietaireNom} ${badgeChangement}</h5>
+            <div class="row">
+              <div class="col-md-8">
+                <p class="card-text">
+                  📍 ${apt.ville || ''} (${apt.quartier || ''})<br>
+                  📅 Entrée : ${apt.dateEntree}<br> 
+                  💰 Loyer : ${apt.cout} FCFA | 💵 Avance : <strong>${apt.avance || 0} FCFA</strong><br>
+                  👤 Locataire : <strong>${apt.locataire}</strong>
+                </p>
+              </div>
+              <div class="col-md-2 text-center small">Proprio<br>${imgProprio}</div>
+              <div class="col-md-2 text-center small">Locataire<br>${imgLocataire}</div>
+            </div>
+            <div class="mt-3 d-flex gap-2">
+                <button class="btn btn-sm btn-info text-white" onclick="preparerModification(${index}, false)">Modifier</button>
+                <button class="btn btn-sm btn-success" onclick="preparerModification(${index}, true)">Nouveau contrat</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="supprimerAppartement(${index})">Supprimer</button>
+            </div>
+          </div>`;
+        liste.appendChild(card);
+      });
+    }
+
+    function supprimerAppartement(index) {
+        if(confirm("Supprimer définitivement cet appartement et tout son historique ?")) {
+            let data = JSON.parse(localStorage.getItem('appartements'));
+            data.splice(index, 1);
+            localStorage.setItem('appartements', JSON.stringify(data));
+            chargerAppartements();
+        }
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      liste.style.display = (liste.style.display === 'none') ? 'block' : 'none';
+      toggleBtn.textContent = (liste.style.display === 'none') ? 'Afficher les appartements' : 'Masquer les appartements';
+    });
+
+    function exporterDonnees() {
+        const data = {
+            appartements: JSON.parse(localStorage.getItem('appartements')) || [],
+            paiements: JSON.parse(localStorage.getItem('paiements')) || {}
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `smartloc_backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+    }
+
+    function importerDonnees(input) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = JSON.parse(e.target.result);
+            if(confirm("Écraser les données actuelles ?")) {
+                localStorage.setItem('appartements', JSON.stringify(data.appartements || []));
+                localStorage.setItem('paiements', JSON.stringify(data.paiements || {}));
+                window.location.reload();
+            }
+        };
+        reader.readAsText(input.files[0]);
+    }
+
+    window.onload = () => {
+        chargerListeProprios();
+        chargerAppartements();
+    };
+  </script>
+
+<script src="pwa-setup.js"></script>
+<script src="synchronisation.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof SmartLocSync !== 'undefined') {
+      SmartLocSync.initialiser();
+    }
+    
+    const session = JSON.parse(localStorage.getItem('smartloc_session'));
+    if (session && session.role === 'admin' && typeof verifierEtNotifierProblemes === 'function') {
+      setTimeout(() => verifierEtNotifierProblemes(), 500);
+    }
+  });
+</script>
+
+<script src="initialisation.js"></script>
+</body>
+</html>

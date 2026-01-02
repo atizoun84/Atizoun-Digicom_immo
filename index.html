@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SmartLoc – Tableau de Bord</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003366">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SmartLoc">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/609/609803.png">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    /* Empêcher le flash du contenu avant authentification */
+    #mainContent { display: none; }
+
+    body {
+      background-color: #f4f7f9;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      padding-top: 140px; 
+      margin-bottom: 50px;
+    }
+    .navbar {
+      background-color: #003366;
+      padding: 12px 0;
+      z-index: 1050;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .navbar-brand, .nav-link {
+      color: white !important;
+    }
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+    .nav-images {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-right: 15px;
+    }
+    .nav-logo, .nav-timbre {
+      height: 50px;
+      object-fit: contain;
+      background: rgba(255,255,255,0.1);
+      border-radius: 5px;
+      padding: 2px;
+    }
+    .card-kpi {
+      border: none;
+      border-radius: 12px;
+      transition: transform 0.3s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .card-kpi:hover {
+      transform: translateY(-5px);
+    }
+    .stat-icon {
+      font-size: 2.5rem;
+      opacity: 0.3;
+      position: absolute;
+      right: 15px;
+      bottom: 10px;
+    }
+    .chart-container {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 30px;
+      height: 380px;
+    }
+    .table-container {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-top: 20px;
+    }
+    .status-badge {
+      font-size: 0.85rem;
+      padding: 5px 12px;
+      border-radius: 20px;
+    }
+    footer {
+      text-align: center;
+      padding: 30px 0;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    #notifBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 2000;
+      border-radius: 50%;
+      width: 55px;
+      height: 55px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    #notifBadge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      font-size: 0.7rem;
+    }
+    .sommaire-notif {
+      position: fixed;
+      bottom: 85px;
+      right: 20px;
+      width: 300px;
+      max-height: 400px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 2001;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+    }
+    .sommaire-header {
+      padding: 10px 15px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8f9fa;
+      border-radius: 12px 12px 0 0;
+    }
+    .notif-item {
+      padding: 12px 15px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.85rem;
+    }
+
+    #printArea { display: none; }
+    @media print {
+        body > * { display: none !important; }
+        #printArea { 
+            display: block !important; 
+            padding: 40px; 
+            background: white; 
+            font-family: 'Times New Roman', serif;
+        }
+        .pv-header { border-bottom: 2px solid #000; margin-bottom: 20px; padding-bottom: 10px; }
+        .table-pv { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .table-pv th, .table-pv td { border: 1px solid #000; padding: 8px; text-align: left; }
+        .pv-signature-img { max-width: 150px; max-height: 80px; margin-top: 10px; }
+    }
+    @media (max-width: 768px) {
+      body { padding-top: 160px; }
+      .chart-container { height: 320px; }
+      .sommaire-notif { width: 280px; right: 10px; bottom: 80px; }
+    }
+
+    /* Style du Modal de Connexion */
+    #authOverlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #003366; z-index: 3000; display: flex; align-items: center; justify-content: center;
+    }
+    .auth-card {
+      background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    /* Style spécifique Modale Impayés */
+    .impaye-row {
+      border-bottom: 1px solid #eee;
+      padding: 10px 0;
+    }
+    .impaye-row:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+
+  <div id="authOverlay">
+    <div class="auth-card text-center">
+      <img src="logo.png" style="height: 60px; mb-3" alt="Logo">
+      <h4 class="fw-bold mt-3 mb-4">Accès SmartLoc</h4>
+      <div class="mb-3 text-start">
+        <label class="form-label">Utilisateur</label>
+        <select id="authRole" class="form-select">
+          </select>
+      </div>
+      <div class="mb-4 text-start">
+        <label class="form-label">Mot de passe</label>
+        <input type="password" id="authPass" class="form-control" placeholder="Entrez votre code">
+      </div>
+      <button class="btn btn-primary w-100 py-2" onclick="validerConnexion()">Se connecter</button>
+    </div>
+  </div>
+
+  <div id="printArea"></div>
+
+  <div id="mainContent">
+    <button id="notifBtn" class="btn btn-primary" onclick="toggleSommaire()">
+      🔔 <span id="notifBadge" class="badge rounded-pill bg-danger d-none">0</span>
+    </button>
+
+    <div id="sommaireNotif" class="sommaire-notif">
+      <div class="sommaire-header">
+        <span class="fw-bold">Sommaire</span>
+        <button class="btn btn-sm btn-link text-decoration-none p-0" onclick="marquerToutLu()">Marquer comme lu</button>
+      </div>
+      <div id="notifListBody">
+        <div class="text-center p-4 text-muted small">Aucune nouvelle notification</div>
+      </div>
+    </div>
+
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container-fluid">
+        <div class="nav-images">
+          <img src="logo.png" alt="Logo" class="nav-logo">
+          <img src="timbre.png" alt="Timbre" class="nav-timbre">
+        </div>
+        <a class="navbar-brand fw-bold fs-3" href="#">SmartLoc</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link active fw-bold" href="index.html">Tableau de bord</a></li>
+            <li class="nav-item"><a id="navConfig" class="nav-link" href="config.html">Configuration</a></li>
+            <li class="nav-item"><a class="nav-link" href="gestion.html">Gestion</a></li>
+            <li class="nav-item"><a class="nav-link" href="reparation.html">Réparations</a></li>
+            <li class="nav-item"><a id="navCompta" class="nav-link" href="comptabilite.html">Comptabilité</a></li>
+            <li class="nav-item"><a id="navParams" class="nav-link" href="parametres.html">Paramètres</a></li>
+            <li class="nav-item">
+              <button class="btn btn-outline-danger btn-sm ms-lg-2 mt-2 mt-lg-0" onclick="deconnexion()">Déconnexion</button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+      <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+        <div>
+          <h2 class="fw-bold text-dark mb-0">Aperçu Analytique</h2>
+          <p class="text-muted" id="statsSecondaires">Chargement des détails...</p>
+        </div>
+        <div class="text-end d-flex gap-2 align-items-center">
+          <div id="currentDate" class="text-muted fw-medium d-none d-md-block"></div>
+          <button class="btn btn-outline-dark btn-sm shadow-sm" onclick="ouvrirModaleRepertoire()">
+            📋 Répertoire des Biens
+          </button>
+          <button id="btnPV" class="btn btn-dark btn-sm shadow-sm" onclick="ouvrirModalePV()">
+            📜 Générer un Procès-Verbal
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card card-kpi bg-primary text-white p-3 position-relative">
+            <div class="small">Revenus Encaissés (Mois)</div>
+            <div class="h3 fw-bold" id="totalRevenus">0 FCFA</div>
+            <div class="stat-icon">💰</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card card-kpi bg-success text-white p-3 position-relative">
+            <div class="small">Taux d'Occupation</div>
+            <div class="h3 fw-bold" id="tauxOccupation">0%</div>
+            <div class="stat-icon">🏠</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card card-kpi bg-warning text-dark p-3 position-relative" onclick="ouvrirModaleImpayes()">
+            <div class="small">Loyers Impayés Cumulés</div>
+            <div class="h3 fw-bold" id="loyersImpayes">0 FCFA</div>
+            <div class="stat-icon">⚠️</div>
+          </div>
+        </div>
+        <div class="col-md-3" id="kpiCom">
+          <div class="card card-kpi bg-info text-white p-3 position-relative">
+            <div class="small">Solde Commission PDG</div>
+            <div class="h3 fw-bold" id="commissionPDG">0 FCFA</div>
+            <div class="stat-icon">📈</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-lg-8">
+          <div class="chart-container">
+            <h5 class="fw-bold mb-3">Flux des Revenus Encaissés</h5>
+            <canvas id="revenueChart"></canvas>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="chart-container">
+            <h5 class="fw-bold mb-3">Répartition du Parc</h5>
+            <canvas id="occupancyChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mb-4">
+          <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTable">
+              🔍 Afficher/Masquer la liste détaillée des appartements
+          </button>
+      </div>
+
+      <div class="collapse" id="collapseTable">
+          <div class="table-container mb-5">
+            <h5 class="fw-bold mb-4">État Individuel des Biens</h5>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Bien</th>
+                    <th>Locataire</th>
+                    <th>Loyer</th>
+                    <th>Dernier Paiement</th>
+                    <th>Statut</th>
+                    <th class="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+          </div>
+      </div>
+
+      <footer>
+        <strong>SmartLoc</strong> par Atizoun Plateny AMOUSSOU &copy; 2025<br>
+        Système de Gestion Immobilière Intelligent | 📞 01 97 74 40 35
+      </footer>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalPV" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title">Générer le Procès-Verbal</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3 mb-3">
+            <div class="col-12">
+              <label class="form-label fw-bold">Lieu du procès-verbal</label>
+              <input type="text" id="pvLieu" class="form-control" placeholder="Ex: Cotonou">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Date de début</label>
+              <input type="date" id="pvDebut" class="form-control">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Date de fin</label>
+              <input type="date" id="pvFin" class="form-control">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" class="btn btn-primary" onclick="genererPVPression()">🖨️ Imprimer le PV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalRepertoire" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+        <div class="modal-header border-0 pb-0" style="background: #f8f9fa; border-radius: 15px 15px 0 0;">
+          <h5 class="modal-title fw-bold text-primary">📑 Répertoire du Parc Immobilier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-sm align-middle">
+              <thead class="table-light sticky-top">
+                <tr><th>Bien</th><th>Locataire</th><th class="text-end">Loyer</th><th class="text-center">Statut</th></tr>
+              </thead>
+              <tbody id="repertoirePreviewBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalImpayes" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+        <div class="modal-header bg-warning text-dark border-0 py-3" style="border-radius: 20px 20px 0 0;">
+          <h5 class="modal-title fw-bold">⚠️ Résumé des Impayés</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" id="impayesListBody">
+          </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-dark w-100 py-2 rounded-pill" onclick="copierResumeImpayes()">📋 Copier le rapport</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // --- REDIRECTION LOGIN SI NON CONNECTÉ ---
+    (function() {
+      const session = JSON.parse(localStorage.getItem('smartloc_session'));
+      if (!session) {
+        window.location.href = 'login.html';
+      }
+    })();
+
+    let modalPVInstance, modalRepertoireInstance, modalImpayesInstance;
+    let revenueChart, occupancyChart;
+    let listeNotifs = [];
+    let rapportGlobalImpayes = "";
+
+    // --- LOGIQUE DE SÉCURITÉ LOCALE ---
+    function chargerListeUtilisateurs() {
+      const params = JSON.parse(localStorage.getItem('smartloc_params')) || {};
+      const users = JSON.parse(localStorage.getItem('smartloc_users')) || [];
+      const select = document.getElementById('authRole');
+      
+      if(!select) return;
+
+      const nomPDG = params.pdgNom || "PDG Administrateur";
+      let options = `<option value="admin">${nomPDG}</option>`;
+      
+      users.forEach((u, index) => {
+        options += `<option value="user_${index}">${u.id}</option>`;
+      });
+
+      select.innerHTML = options;
+    }
+
+    function validerConnexion() {
+      const role = document.getElementById('authRole').value;
+      const pass = document.getElementById('authPass').value;
+      const params = JSON.parse(localStorage.getItem('smartloc_params')) || {};
+      const users = JSON.parse(localStorage.getItem('smartloc_users')) || [];
+      
+      if (role === 'admin') {
+        const passAdmin = params.adminPass || "admin2025";
+        if (pass === passAdmin) {
+          autoriserAcces('admin');
+        } else {
+          alert("Mot de passe Administrateur incorrect.");
+        }
+      } 
+      else if (role.startsWith('user_')) {
+        const index = parseInt(role.split('_')[1]);
+        if (users[index] && pass === users[index].pass) {
+          autoriserAcces('agent', users[index]);
+        } else {
+          alert("Mot de passe utilisateur incorrect.");
+        }
+      }
+    }
+
+    function autoriserAcces(role, userObj = null) {
+      const sessionData = { 
+        role: (role === 'admin' ? 'admin' : 'agent'), 
+        id: (userObj ? userObj.id : 'admin') 
+      };
+      localStorage.setItem('smartloc_session', JSON.stringify(sessionData));
+
+      if (role === 'agent') {
+        window.location.href = 'gestion.html';
+        return; 
+      }
+
+      document.getElementById('authOverlay').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+      
+      document.getElementById('navConfig').style.display = 'block';
+      document.getElementById('navCompta').style.display = 'block';
+      document.getElementById('navParams').style.display = 'block';
+      document.getElementById('btnPV').style.display = 'block';
+      document.getElementById('kpiCom').style.display = 'block';
+      
+      initDashboard();
+      verifierImportationRecente();
+    }
+
+    function deconnexion() {
+      localStorage.removeItem('smartloc_session');
+      window.location.href = 'login.html';
+    }
+
+    function verifierImportationRecente() {
+        const check = localStorage.getItem('smartloc_import_notif');
+        if (check) {
+            ajouterNotifSommaire("🔄 Nouvelles données importées avec succès.");
+            localStorage.removeItem('smartloc_import_notif');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const dateEl = document.getElementById('currentDate');
+      if(dateEl) dateEl.textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      
+      const pvLieuEl = document.getElementById('pvLieu');
+      if(pvLieuEl) pvLieuEl.value = localStorage.getItem('smartloc_pv_lieu') || "";
+
+      const mPV = document.getElementById('modalPV');
+      const mRep = document.getElementById('modalRepertoire');
+      const mImp = document.getElementById('modalImpayes');
+      
+      if(mPV) modalPVInstance = new bootstrap.Modal(mPV);
+      if(mRep) modalRepertoireInstance = new bootstrap.Modal(mRep);
+      if(mImp) modalImpayesInstance = new bootstrap.Modal(mImp);
+
+      chargerListeUtilisateurs();
+
+      const session = JSON.parse(localStorage.getItem('smartloc_session'));
+      if (session) {
+          if (session.role === 'agent') {
+              window.location.href = 'gestion.html';
+          } else {
+              autoriserAcces('admin');
+          }
+      }
+    });
+
+    function toggleSommaire() {
+        const s = document.getElementById('sommaireNotif');
+        s.style.display = (s.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function ajouterNotifSommaire(msg) {
+        const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+        listeNotifs.unshift({ text: msg, time: now });
+        renderSommaire();
+    }
+
+    function renderSommaire() {
+        const body = document.getElementById('notifListBody');
+        const badge = document.getElementById('notifBadge');
+        if(listeNotifs.length > 0) {
+            badge.textContent = listeNotifs.length;
+            badge.classList.remove('d-none');
+            body.innerHTML = listeNotifs.map(n => `<div class="notif-item"><strong>${n.time}</strong><br>${n.text}</div>`).join('');
+        } else {
+            badge.classList.add('d-none');
+            body.innerHTML = '<div class="text-center p-4 text-muted small">Aucune nouvelle notification</div>';
+        }
+    }
+
+    function marquerToutLu() {
+        listeNotifs = []; renderSommaire(); toggleSommaire();
+        document.getElementById('notifBadge').classList.add('d-none');
+    }
+
+    function ouvrirModalePV() { if(modalPVInstance) modalPVInstance.show(); }
+
+    function ouvrirModaleRepertoire() {
+        renderRepertoireTable();
+        if(modalRepertoireInstance) modalRepertoireInstance.show();
+    }
+
+    function renderRepertoireTable() {
+        const previewBody = document.getElementById('repertoirePreviewBody');
+        const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+        previewBody.innerHTML = '';
+        appartements.forEach(apt => {
+            const isOcc = apt.locataire && apt.locataire !== "Néant";
+            previewBody.innerHTML += `<tr><td class="fw-bold">${apt.nom}</td><td>${apt.locataire || 'Vacant'}</td><td class="text-end">${parseFloat(apt.cout).toLocaleString()} F</td><td class="text-center"><span class="badge ${isOcc ? 'bg-success' : 'bg-danger'}">${isOcc ? 'Occupé' : 'Vacant'}</span></td></tr>`;
+        });
+    }
+
+    function initDashboard() {
+      const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+      const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
+      const comptaConfig = JSON.parse(localStorage.getItem('compta_config')) || {};
+      const retraitsPDG = JSON.parse(localStorage.getItem('retraits_commission')) || {};
+
+      let totalMois = 0, totalImpayesGlobal = 0, occupe = 0, totalComGeneree = 0, totalRetraitsPDG = 0;
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const now = new Date();
+
+      const labelsMois = [];
+      const dataRevenus = [0, 0, 0, 0, 0, 0];
+      for(let i=5; i>=0; i--) {
+          const d = new Date(); d.setMonth(d.getMonth() - i);
+          labelsMois.push(d.toLocaleDateString('fr-FR', {month: 'short'}));
+      }
+
+      let rapportTemp = "📋 RAPPORT DES IMPAYÉS - SMARTLOC\n--------------------------------\n";
+
+      appartements.forEach((apt, index) => {
+        const isOcc = apt.locataire && apt.locataire !== "Néant";
+        if(isOcc) occupe++;
+        
+        // Calcul des impayés dynamiques
+        if (isOcc && apt.dateEntree) {
+            const dateEntree = new Date(apt.dateEntree);
+            const moisOccupes = (now.getFullYear() - dateEntree.getFullYear()) * 12 + (now.getMonth() - dateEntree.getMonth()) + 1;
+            const totalDu = Math.max(0, moisOccupes * parseFloat(apt.cout));
+            
+            const pApt = paiements[index] || [];
+            const totalPaye = pApt.reduce((sum, p) => sum + parseFloat(p.montant), 0);
+            const impayeApt = Math.max(0, totalDu - totalPaye);
+            
+            totalImpayesGlobal += impayeApt;
+            if(impayeApt > 0) {
+                rapportTemp += `🏠 ${apt.nom} | Locataire: ${apt.locataire}\n💰 Impayé: ${impayeApt.toLocaleString()} FCFA\n\n`;
+            }
+        }
+
+        const pApt = paiements[index] || [];
+        pApt.forEach(p => {
+          const pDate = new Date(p.dateEnregistrement);
+          if(pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear) totalMois += parseFloat(p.montant);
+          for(let i=0; i<6; i++) {
+              const checkDate = new Date(); checkDate.setMonth(checkDate.getMonth() - (5-i));
+              if(pDate.getMonth() === checkDate.getMonth() && pDate.getFullYear() === checkDate.getFullYear()) {
+                  dataRevenus[i] += parseFloat(p.montant);
+              }
+          }
+          if(comptaConfig[index]) totalComGeneree += (parseFloat(p.montant) * (parseFloat(comptaConfig[index].pourcentage) / 100));
+        });
+        const rApt = retraitsPDG[index] || [];
+        totalRetraitsPDG += rApt.reduce((s, r) => s + parseFloat(r.montant), 0);
+      });
+
+      rapportGlobalImpayes = rapportTemp + `--------------------------------\nTOTAL GLOBAL: ${totalImpayesGlobal.toLocaleString()} FCFA`;
+
+      if(document.getElementById('totalRevenus')) document.getElementById('totalRevenus').textContent = totalMois.toLocaleString() + " FCFA";
+      if(document.getElementById('tauxOccupation')) document.getElementById('tauxOccupation').textContent = appartements.length > 0 ? Math.round((occupe/appartements.length)*100) + "%" : "0%";
+      if(document.getElementById('commissionPDG')) document.getElementById('commissionPDG').textContent = Math.round(totalComGeneree - totalRetraitsPDG).toLocaleString() + " FCFA";
+      if(document.getElementById('loyersImpayes')) document.getElementById('loyersImpayes').textContent = totalImpayesGlobal.toLocaleString() + " FCFA";
+      if(document.getElementById('statsSecondaires')) document.getElementById('statsSecondaires').innerHTML = `Parc total : <strong>${appartements.length}</strong> | Occupés : <strong>${occupe}</strong>`;
+
+      const tbody = document.getElementById('tableBody');
+      if(tbody) {
+        tbody.innerHTML = '';
+        appartements.forEach((apt, index) => {
+          const pApt = paiements[index] || [];
+          const lastP = pApt.length > 0 ? pApt[pApt.length - 1].dateEnregistrement.split('T')[0] : '---';
+          const isOcc = apt.locataire && apt.locataire !== "Néant";
+          tbody.innerHTML += `<tr><td><span class="fw-bold">${apt.nom}</span></td><td>${apt.locataire || '---'}</td><td>${parseFloat(apt.cout).toLocaleString()} F</td><td>${lastP}</td><td><span class="status-badge ${isOcc ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}">${isOcc ? 'Occupé' : 'Vacant'}</span></td><td class="text-center"><a href="gestion.html" class="btn btn-sm btn-outline-primary">Gérer</a></td></tr>`;
+        });
+      }
+      const vacant = appartements.length - occupe;
+      initCharts(occupe, vacant, labelsMois, dataRevenus);
+    }
+
+    function ouvrirModaleImpayes() {
+        const body = document.getElementById('impayesListBody');
+        const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+        const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
+        const now = new Date();
+        
+        let html = "";
+        let count = 0;
+
+        appartements.forEach((apt, index) => {
+            const isOcc = apt.locataire && apt.locataire !== "Néant";
+            if (isOcc && apt.dateEntree) {
+                const dateEntree = new Date(apt.dateEntree);
+                const moisOccupes = (now.getFullYear() - dateEntree.getFullYear()) * 12 + (now.getMonth() - dateEntree.getMonth()) + 1;
+                const totalDu = Math.max(0, moisOccupes * parseFloat(apt.cout));
+                const pApt = paiements[index] || [];
+                const totalPaye = pApt.reduce((sum, p) => sum + parseFloat(p.montant), 0);
+                const impayeApt = Math.max(0, totalDu - totalPaye);
+
+                if (impayeApt > 0) {
+                    count++;
+                    html += `
+                        <div class="impaye-row d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold text-dark">${apt.nom}</div>
+                                <div class="small text-muted">${apt.locataire}</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-danger">${impayeApt.toLocaleString()} F</div>
+                                <div class="small text-muted">Dû depuis l'entrée</div>
+                            </div>
+                        </div>`;
+                }
+            }
+        });
+
+        body.innerHTML = html || '<div class="text-center py-4 text-muted">Aucun impayé détecté. Bravo !</div>';
+        if(modalImpayesInstance) modalImpayesInstance.show();
+    }
+
+    function copierResumeImpayes() {
+        navigator.clipboard.writeText(rapportGlobalImpayes).then(() => {
+            alert("Rapport copié dans le presse-papier !");
+        });
+    }
+
+    function initCharts(occupe, vacant, labels, data) {
+      const c1 = document.getElementById('revenueChart');
+      const c2 = document.getElementById('occupancyChart');
+      if(c1) {
+        if(revenueChart) revenueChart.destroy();
+        revenueChart = new Chart(c1.getContext('2d'), {
+          type: 'line',
+          data: { labels: labels, datasets: [{ label: 'Revenus (FCFA)', data: data, borderColor: '#003366', backgroundColor: 'rgba(0, 51, 102, 0.1)', fill: true, tension: 0.4 }] },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      }
+      if(c2) {
+        if(occupancyChart) occupancyChart.destroy();
+        occupancyChart = new Chart(c2.getContext('2d'), {
+          type: 'doughnut',
+          data: { labels: ['Occupés', 'Vacants'], datasets: [{ data: [occupe, vacant], backgroundColor: ['#198754', '#dc3545'], borderWidth: 0 }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+      }
+    }
+
+    function genererPVPression() {
+        const lieu = document.getElementById('pvLieu').value;
+        const debut = document.getElementById('pvDebut').value;
+        const fin = document.getElementById('pvFin').value;
+        if(!lieu || !debut || !fin) return alert("Veuillez remplir les informations.");
+        localStorage.setItem('smartloc_pv_lieu', lieu);
+        
+        const params = JSON.parse(localStorage.getItem('smartloc_params')) || {};
+        const sigPDG = params.pdgSig ? `<img src="${params.pdgSig}" class="pv-signature-img">` : '';
+        const nomPDG = params.pdgNom || "LE GESTIONNAIRE";
+
+        const dateAuj = new Date();
+        const dateLittérale = `L'an deux mil sept et le ${dateAuj.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+        
+        let html = `
+            <div class="pv-header text-center">
+                <div class="d-flex justify-content-between align-items-center">
+                    <img src="logo.png" style="height:60px;">
+                    <h3>PROCÈS-VERBAL</h3>
+                    <img src="timbre.png" style="height:60px;">
+                </div>
+            </div>
+            <p><strong>${dateLittérale}</strong>, à <strong>${lieu}</strong>.</p>
+            <table class="table-pv">
+                <thead><tr><th>Bien</th><th>Loyer</th><th>Encaissé</th></tr></thead>
+                <tbody>`;
+        
+        const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+        const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
+        
+        appartements.forEach((apt, index) => {
+            const enc = (paiements[index] || []).filter(p => p.dateEnregistrement >= debut && p.dateEnregistrement <= fin).reduce((s, p) => s + parseFloat(p.montant), 0);
+            html += `<tr><td>${apt.nom}</td><td>${parseFloat(apt.cout).toLocaleString()} F</td><td>${enc.toLocaleString()} F</td></tr>`;
+        });
+        
+        html += `
+                </tbody>
+            </table>
+            <div class="mt-5 row">
+                <div class="col-6"></div>
+                <div class="col-6 text-center">
+                    <p class="fw-bold mb-0">Signature du PDG</p>
+                    ${sigPDG}
+                    <p class="mt-1"><strong>${nomPDG}</strong></p>
+                </div>
+            </div>`;
+            
+        document.getElementById('printArea').innerHTML = html;
+        if(modalPVInstance) modalPVInstance.hide();
+        setTimeout(() => { window.print(); }, 500);
+    }
+  </script>
+
+<script src="pwa-setup.js"></script>
+<script src="synchronisation.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof SmartLocSync !== 'undefined') {
+      SmartLocSync.initialiser();
+    }
+    const session = JSON.parse(localStorage.getItem('smartloc_session'));
+    if (session && session.role === 'admin' && typeof verifierEtNotifierProblemes === 'function') {
+      setTimeout(() => verifierEtNotifierProblemes(), 500);
+    }
+  });
+</script>
+<script src="initialisation.js"></script>
+</body>
+</html>
