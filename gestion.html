@@ -18,9 +18,10 @@
     .navbar-date { color: var(--gold); font-weight: bold; font-size: 0.9rem; }
     
     .info-recuperee { color: #0099ff !important; font-weight: bold; background-color: #f8f9fa; }
+    
+    /* Styles pour la liste des mois */
     .option-paye { color: var(--success-green) !important; font-weight: bold; }
-    /* Style pour les mois échus : Rouge et Gras */
-    .option-retard { color: var(--danger-red) !important; font-weight: bold; background-color: #fff5f5; }
+    .option-retard { color: var(--danger-red) !important; font-weight: bold !important; }
     
     .doc-container {
         border: 2px double var(--navy);
@@ -42,9 +43,7 @@
     }
 
     .signature-img { max-width: 150px; max-height: 80px; object-fit: contain; margin-top: 10px; }
-    .badge-retard { font-size: 1.1rem; padding: 10px; }
     
-    /* Historique scrollable */
     #historiquePaiements { max-height: 300px; overflow-y: auto; }
   </style>
 </head>
@@ -100,7 +99,6 @@
     <div class="row g-4">
         <div class="col-md-6">
             <label class="form-label fw-bold">📅 Historique & Sélection des Mois</label>
-            <p class="small text-muted">Les mois passés non payés s'affichent en <span class="text-danger fw-bold">Rouge Gras</span>.</p>
             <select id="selectMois" class="form-select" multiple size="12" onchange="calculerTotal()"></select>
         </div>
         <div class="col-md-6 d-flex flex-column justify-content-center">
@@ -203,36 +201,39 @@
         const selMois = document.getElementById('selectMois');
         selMois.innerHTML = "";
         const paiements = (JSON.parse(localStorage.getItem('paiements')) || {})[currentAptData.id] || [];
-        const dateEntree = new Date(currentAptData.dateEntree || currentAptData.date);
+        
+        let dateEntree = new Date(currentAptData.dateEntree || currentAptData.date);
+        if (isNaN(dateEntree)) dateEntree = new Date(); 
+        
         const dateAujourdhui = new Date();
+        const premierDuMoisActuel = new Date(dateAujourdhui.getFullYear(), dateAujourdhui.getMonth(), 1);
         
         let curseur = new Date(dateEntree.getFullYear(), dateEntree.getMonth(), 1);
         let nbImpayes = 0;
         let totalDu = 0;
         
-        // Calcul du solde des avances
         let soldeAvance = paiements.filter(p => p.type === 'Avance').reduce((acc, p) => acc + p.montant, 0);
         document.getElementById('soldeAvanceDisplay').textContent = soldeAvance.toLocaleString() + " FCFA";
 
-        // De l'entrée jusqu'à aujourd'hui + 1 mois
-        const finBoucle = new Date(dateAujourdhui.getFullYear(), dateAujourdhui.getMonth() + 1, 1);
+        const finBoucle = new Date(dateAujourdhui.getFullYear(), dateAujourdhui.getMonth() + 12, 1);
 
         while (curseur <= finBoucle) {
-            const moisCle = curseur.toISOString().slice(0, 7);
             const label = curseur.toLocaleDateString('fr-FR', {month:'long', year:'numeric'}).toUpperCase();
-            const estPaye = paiements.some(p => p.mois === moisCle && p.type === 'Paiement');
+            const estPaye = paiements.some(p => p.mois.toUpperCase() === label && p.type === 'Paiement');
+            
             const option = document.createElement('option');
-            option.value = moisCle;
+            option.value = label;
 
             if (estPaye) {
                 option.textContent = `✅ ${label} (PAYÉ)`;
                 option.className = "option-paye";
                 option.disabled = true;
             } else {
-                // Si le mois est strictement antérieur au mois actuel -> ROUGE GRAS
-                if (curseur < new Date(dateAujourdhui.getFullYear(), dateAujourdhui.getMonth(), 1)) {
+                if (curseur < premierDuMoisActuel) {
                     option.textContent = `🚨 ${label} (IMPAYÉ)`;
                     option.className = "option-retard";
+                    option.style.color = "red";
+                    option.style.fontWeight = "bold";
                     nbImpayes++;
                     totalDu += parseFloat(currentAptData.cout);
                 } else {
@@ -253,7 +254,7 @@
 
     function validerPaiement() {
         const selectedMois = Array.from(document.getElementById('selectMois').selectedOptions).filter(o => !o.disabled);
-        if(selectedMois.length === 0) return alert("Sélectionnez des mois impayés.");
+        if(selectedMois.length === 0) return alert("Sélectionnez des mois.");
         
         enregistrerOperation(selectedMois.map(opt => ({
             mois: opt.value,
@@ -268,7 +269,7 @@
         const mnt = prompt("Montant de l'avance (FCFA) :");
         if(!mnt || isNaN(mnt)) return;
         enregistrerOperation([{
-            mois: new Date().toISOString().slice(0, 7),
+            mois: new Date().toLocaleDateString('fr-FR', {month:'long', year:'numeric'}).toUpperCase(),
             montant: parseFloat(mnt),
             type: 'Avance'
         }]);
@@ -278,27 +279,30 @@
 
     function utiliserAvance() {
         const selectedMois = Array.from(document.getElementById('selectMois').selectedOptions).filter(o => !o.disabled);
-        if(selectedMois.length === 0) return alert("Sélectionnez les mois à couvrir par l'avance.");
+        if(selectedMois.length === 0) return alert("Sélectionnez les mois.");
         
         const coutTotal = selectedMois.length * parseFloat(currentAptData.cout);
         const paiements = (JSON.parse(localStorage.getItem('paiements')) || {})[currentAptData.id] || [];
         const solde = paiements.filter(p => p.type === 'Avance').reduce((acc, p) => acc + p.montant, 0);
 
-        if(solde < coutTotal) return alert(`Solde insuffisant (${solde} FCFA) pour payer ${coutTotal} FCFA.`);
+        if(solde < coutTotal) return alert(`Solde insuffisant.`);
 
-        // On déduit des avances (montant négatif) et on crée les lignes de paiement
         let ops = selectedMois.map(opt => ({ mois: opt.value, montant: parseFloat(currentAptData.cout), type: 'Paiement' }));
-        ops.push({ mois: new Date().toISOString().slice(0, 7), montant: -coutTotal, type: 'Avance', obs: 'Déduction pour paiement loyer' });
+        ops.push({ 
+            mois: new Date().toLocaleDateString('fr-FR', {month:'long', year:'numeric'}).toUpperCase(), 
+            montant: -coutTotal, 
+            type: 'Avance', 
+            obs: 'Utilisation solde' 
+        });
         
         enregistrerOperation(ops);
-        alert("Loyer réglé via le solde des avances.");
+        alert("Réglé via avance.");
         afficherDetails();
     }
 
     function enregistrerOperation(operations) {
         let allP = JSON.parse(localStorage.getItem('paiements')) || {};
         if(!allP[currentAptData.id]) allP[currentAptData.id] = [];
-        
         operations.forEach(op => {
             allP[currentAptData.id].push({
                 id: Date.now() + Math.random(),
@@ -315,24 +319,20 @@
     function chargerHistorique() {
         const histDiv = document.getElementById('historiquePaiements');
         histDiv.innerHTML = "";
-        const paiements = ((JSON.parse(localStorage.getItem('paiements')) || {})[currentAptData.id] || []).slice(-10).reverse();
-        
+        const paiements = ((JSON.parse(localStorage.getItem('paiements')) || {})[currentAptData.id] || []).slice(-15).reverse();
         paiements.forEach(p => {
             const item = document.createElement('div');
             item.className = "list-group-item d-flex justify-content-between align-items-center";
             item.innerHTML = `
-                <div>
-                    <span class="fw-bold">${p.type}</span> - ${p.montant.toLocaleString()} F<br>
-                    <small class="text-muted">${p.mois} (${new Date(p.dateEnregistrement).toLocaleDateString()})</small>
-                </div>
-                <button onclick="supprimerOperation(${p.id})" class="btn btn-sm btn-outline-danger">🗑️</button>
+                <div><span class="fw-bold">${p.type}</span> - ${p.montant.toLocaleString()} F<br><small>${p.mois}</small></div>
+                <button onclick="supprimerOperation(${p.id})" class="btn btn-sm btn-outline-danger" title="Supprimer">🗑️</button>
             `;
             histDiv.appendChild(item);
         });
     }
 
     function supprimerOperation(id) {
-        if(!confirm("Supprimer cette opération ?")) return;
+        if(!confirm("Voulez-vous vraiment supprimer cet enregistrement ?")) return;
         let allP = JSON.parse(localStorage.getItem('paiements'));
         allP[currentAptData.id] = allP[currentAptData.id].filter(p => p.id !== id);
         localStorage.setItem('paiements', JSON.stringify(allP));
@@ -340,16 +340,15 @@
     }
 
     function genererPV() {
-        const lieu = document.getElementById('lieuPV').value;
-        if(!lieu) return alert("Saisissez le lieu.");
+        const lieu = document.getElementById('lieuPV').value || "Non spécifié";
         const dateNow = new Date();
         const html = `
             <div class="doc-container shadow">
                 <p><b>Fait à ${lieu.toUpperCase()}</b></p>
                 <p>L'an deux mil sept et le ${dateNow.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'})},</p>
-                <p>Nous soussigné, <b>${USER_INFO.nom}</b>, certifions que le locataire <b>${currentAptData.locataire.toUpperCase()}</b> s'est acquitté de ses obligations pour l'appartement <b>${currentAptData.nom}</b>.</p>
+                <p>Nous soussigné, <b>${USER_INFO.nom}</b>, certifions que le locataire <b>${currentAptData.locataire.toUpperCase()}</b> occupant l'appartement <b>${currentAptData.nom}</b> est en règle.</p>
                 <div class="row mt-5">
-                    <div class="col-6 text-center"><u>Le Locataire</u></div>
+                    <div class="col-6 text-center"><u>Signature Locataire</u></div>
                     <div class="col-6 text-center"><u>Le Bailleur</u><br><b>${USER_INFO.nom}</b></div>
                 </div>
             </div>
