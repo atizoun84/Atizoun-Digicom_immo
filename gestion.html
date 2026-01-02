@@ -3,100 +3,211 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SmartLoc – Saisie des paiements</title>
+  <title>SmartLocation – Saisie des paiements</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#003366">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SmartLoc">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/609/609803.png">
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   
   <style>
-    body { 
-      background-color: #f0f2f5; 
-      font-family: 'Segoe UI', sans-serif; 
-      padding-top: 140px; 
+    body {
+      background-color: #f0f2f5;
+      font-family: 'Segoe UI', sans-serif;
+      padding-top: 140px; /* Ajusté pour éviter le chevauchement avec la navbar */
       padding-bottom: 40px;
-      min-height: 100vh;
     }
-    h2 { color: #003366; font-weight: 600; }
-    .form-label { font-weight: 500; color: #003366; }
-    .btn-primary { background-color: #003366; border: none; }
-    .navbar { 
-      background-color: #003366; 
-      padding-top: 15px; 
-      padding-bottom: 15px; 
-      z-index: 1050; 
-    }
-    .navbar-brand, .nav-link { color: white !important; }
-    .navbar-date { color: #ffcc00; font-weight: bold; font-size: 0.9rem; }
-    .nav-images { display: flex; align-items: center; gap: 15px; margin-right: 15px; }
-    .nav-logo, .nav-timbre { 
-      max-height: 85px; 
-      width: auto; 
-      object-fit: contain; 
-      background-color: rgba(255, 255, 255, 0.1); 
-      border-radius: 4px;
-    }
-    .info-recuperee { color: #0099ff !important; font-weight: bold !important; font-family: 'Tahoma', sans-serif !important; }
-    #montantRetards { color: #dc3545 !important; font-weight: bold !important; background-color: #fff5f5; }
-    .recu-pro-container { 
-      border: 2px double #003366; 
-      padding: 20px; 
-      background: #fff; 
-      color: #000; 
-      max-width: 800px; 
-      margin: auto; 
-    }
-    .recu-header { border-bottom: 2px solid #003366; margin-bottom: 15px; padding-bottom: 10px; }
-    .option-paye { color: #0099ff !important; font-weight: bold; }
-    .option-retard { color: #dc3545 !important; font-weight: bold; }
-    #printArea { display: none; }
-    @media print {
-        body > *:not(#printArea) { display: none !important; }
-        #printArea { 
-          display: block !important; 
-          position: absolute; 
-          left: 0; 
-          top: 0; 
-          width: 100%; 
-          background: white;
-        }
-    }
-    @media (max-width: 576px) { 
-      body { padding-top: 130px; } 
-      .nav-logo, .nav-timbre { max-height: 50px; } 
-    }
-    .success-overlay { 
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      width: 100%; 
-      height: 100%; 
-      background: rgba(255,255,255,0.9); 
-      z-index: 10000; 
-      display: none; 
-      align-items: center; 
-      justify-content: center; 
-      flex-direction: column; 
-    }
-    .success-icon { font-size: 80px; color: #198754; }
-    .error-message {
-      position: fixed;
-      top: 120px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #dc3545;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 5px;
-      z-index: 10000;
+    /* Style conservé mais non utilisé pour l'overlay */
+    #authOverlay {
       display: none;
     }
-    .admin-only { display: none !important; }
+    h2 {
+      color: #003366;
+      font-weight: 600;
+    }
+    .form-label {
+      font-weight: 500;
+      color: #003366;
+    }
+    .btn-primary {
+      background-color: #003366;
+      border: none;
+    }
+    .btn-primary:hover {
+      background-color: #00509e;
+    }
+    .navbar {
+      background-color: #003366;
+      padding-top: 15px;
+      padding-bottom: 15px;
+      z-index: 1050;
+    }
+    .navbar-brand, .nav-link {
+      color: white !important;
+    }
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+    .nav-images {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-right: 15px;
+      flex-wrap: nowrap;
+    }
+    .nav-logo, .nav-timbre {
+      height: auto;
+      max-height: 85px;
+      width: auto;
+      max-width: 25vw;
+      object-fit: contain;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      padding: 2px;
+    }
+    .navbar-date {
+      color: #ffcc00;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 0.9em;
+      text-align: center;
+      color: #666;
+    }
+    #historiqueSection {
+      display: none; 
+      margin-top: 30px; /* Ajout d'espace pour éviter les collisions visuelles */
+    }
+    .table-responsive {
+        overflow-x: auto;
+        margin-top: 15px;
+    }
+    .info-recuperee {
+        color: #0099ff !important;
+        font-weight: bold !important;
+        font-family: 'Tahoma', sans-serif !important;
+    }
+    #montantCumulePaye {
+        color: #0d6efd !important;
+        font-weight: bold !important;
+    }
+    #montantRetards {
+        color: #dc3545 !important;
+        font-weight: bold !important;
+    }
+    #historiquePaiements tr {
+        cursor: pointer;
+    }
+    #historiquePaiements tr:hover {
+        background-color: #f1f8ff !important;
+    }
+
+    .recu-pro-container {
+        border: 2px double #003366;
+        padding: 30px;
+        background: #fff;
+        color: #000;
+        position: relative;
+    }
+    .recu-header {
+        border-bottom: 2px solid #003366;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+    }
+
+    @media print {
+        body > * {
+            display: none !important;
+        }
+        #printArea {
+            display: block !important;
+            visibility: visible !important;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 10px;
+            background: white;
+            font-size: 10pt !important;
+        }
+        #printArea * {
+            display: block;
+            visibility: visible !important;
+        }
+        #printArea table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            display: table !important;
+        }
+        #printArea thead { display: table-header-group !important; }
+        #printArea tbody { display: table-row-group !important; }
+        #printArea tr { display: table-row !important; page-break-inside: avoid; }
+        #printArea th, #printArea td { 
+            display: table-cell !important; 
+            padding: 5px !important;
+            font-size: 9pt !important;
+        }
+        .table-secondary {
+            background-color: #e2e3e5 !important;
+            -webkit-print-color-adjust: exact;
+        }
+        .table-dark th {
+            background-color: #003366 !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact;
+        }
+        .row { display: flex !important; flex-wrap: nowrap !important; }
+        .col-6 { width: 50% !important; }
+        .text-align: right !important;
+    }
+    
+    .signature-img {
+      max-width: 150px;
+      max-height: 80px;
+      display: block;
+      margin: 5px auto;
+    }
+    #zoneAvancesDisponibles {
+      background-color: #e7f3ff;
+      border: 1px solid #b3d7ff;
+      border-radius: 8px;
+    }
+    #printArea { display: none; }
+
+    @media (max-width: 576px) {
+      body { padding-top: 130px; } /* Ajusté pour mobile */
+      .nav-logo, .nav-timbre { max-height: 50px; }
+      .navbar-brand { font-size: 1.2rem !important; }
+    }
+
+    /* Animation de succès */
+    @keyframes successBounce {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .success-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.9); z-index: 10000;
+      display: none; align-items: center; justify-content: center;
+      flex-direction: column;
+    }
+    .success-icon {
+      font-size: 80px; color: #198754;
+      animation: successBounce 0.6s ease-out;
+    }
+
+    /* Restriction d'affichage pour les non-admins */
+    .admin-only {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -105,354 +216,710 @@
       <div class="success-icon">✅</div>
       <h3 class="text-success mt-3">Paiement enregistré !</h3>
   </div>
-  
-  <div id="errorMessage" class="error-message"></div>
+
   <div id="printArea"></div>
 
-  <nav class="navbar fixed-top navbar-expand-lg">
+  <nav class="navbar fixed-top navbar-expand-lg" id="mainNavbar">
     <div class="container-fluid">
       <div class="nav-images">
-        <img src="logo.png" alt="Logo" class="nav-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/609/609803.png';">
-        <img src="timbre.png" alt="Timbre" class="nav-timbre" onerror="this.src='https://cdn-icons-png.flaticon.com/512/609/609803.png';">
+        <img src="logo.png" alt="Logo" class="nav-logo">
+        <img src="timbre.png" alt="Timbre" class="nav-timbre">
       </div>
       <a class="navbar-brand fw-bold fs-3" href="#">SmartLoc <span id="navbarDate" class="ms-3 navbar-date"></span></a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
+        <span class="navbar-toggler-icon bg-light"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="index.html">Tableau de bord</a></li>
+        <ul class="navbar-nav ms-auto" id="navLinks">
+          <li class="nav-item admin-only"><a class="nav-link" href="index.html">Tableau de bord</a></li>
           <li class="nav-item admin-only"><a class="nav-link" href="config.html">Configuration</a></li>
           <li class="nav-item"><a class="nav-link active" href="gestion.html">Gestion</a></li>
-          <li class="nav-item"><a class="nav-link" href="reparation.html">Réparations</a></li>
-          <li class="nav-item ms-lg-3"><span id="userNameDisplay" class="nav-link fw-bold text-warning"></span></li>
-          <li class="nav-item"><button onclick="deconnexion()" class="btn btn-outline-danger btn-sm text-white ms-lg-3">🚪 Déconnexion</button></li>
+          <li class="nav-item admin-only"><a class="nav-link" href="comptabilite.html">Comptabilité</a></li>
+          <li class="nav-item admin-only"><a class="nav-link" href="parametres.html">Paramètres</a></li>
+          <li class="nav-item ms-lg-3">
+            <span id="userNameDisplay" class="nav-link fw-bold text-warning"></span>
+          </li>
+          <li class="nav-item">
+            <button onclick="deconnexion()" class="btn btn-outline-danger btn-sm nav-link border-0 text-white">🚪 Déconnexion</button>
+          </li>
         </ul>
       </div>
     </div>
   </nav>
 
-  <div class="container">
+  <div class="container" id="mainContent">
     <h2 class="text-center mb-4">💳 Gestion des Paiements</h2>
-    <div class="row mb-4">
-      <div class="col-md-6 mb-3">
-        <label class="form-label">👤 Filtrer par Propriétaire</label>
-        <select id="selectProprietaire" class="form-select" onchange="filtrerAppartementsParProprio()"></select>
-      </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label">🏢 Sélectionner un appartement</label>
-        <select id="selectAppartement" class="form-select" onchange="afficherDetailsAppartement()"></select>
-      </div>
+
+    <div class="d-flex justify-content-center gap-2 mb-4 no-print admin-only">
+        <button onclick="sauvegarderTout()" class="btn btn-outline-dark btn-sm">💾 Sauvegarder l'application (JSON)</button>
+        <button onclick="restaurerTout()" class="btn btn-outline-danger btn-sm">🔄 Restaurer les sauvegarde</button>
+        <input type="file" id="importFile" style="display: none;" onchange="importerFichier(event)">
+    </div>
+
+    <div class="mb-4">
+      <label class="form-label">🏢 Sélectionner un appartement</label>
+      <select id="selectAppartement" class="form-select"></select>
     </div>
 
     <div class="row mb-4">
-        <div class="col-md-3 mb-3"><label class="form-label">👤 Propriétaire</label><input type="text" id="nomProprietaireAffichage" class="form-control info-recuperee" readonly /></div>
-        <div class="col-md-3 mb-3"><label class="form-label">📞 Contact</label><input type="text" id="contactProprietaireAffichage" class="form-control info-recuperee" readonly /></div>
-        <div class="col-md-3 mb-3"><label class="form-label">📍 Localisation</label><input type="text" id="localisationAffichage" class="form-control info-recuperee" readonly /></div>
-        <div class="col-md-3 mb-3"><label class="form-label">💰 Loyer (FCFA)</label><input type="number" id="coutMensuelAffichage" class="form-control info-recuperee" readonly /></div>
-    </div>
-
-    <div class="row">
         <div class="col-md-4 mb-3">
-          <label class="form-label">📅 Mois à payer</label>
-          <select id="mois" class="form-select" multiple size="8" onchange="calculerCumul()"></select>
+            <label for="nomProprietaireAffichage" class="form-label">👤 Nom du Propriétaire</label>
+            <input type="text" id="nomProprietaireAffichage" class="form-control info-recuperee" readonly />
         </div>
         <div class="col-md-4 mb-3">
-            <label class="form-label">💰 Déjà Payé (Total)</label>
-            <input type="text" id="montantCumulePaye" class="form-control" readonly />
-            <label class="form-label mt-3">🚨 Total des Retards</label>
-            <input type="text" id="montantRetards" class="form-control" readonly />
+            <label for="contactProprietaireAffichage" class="form-label">📞 Contact Propriétaire</label>
+            <input type="text" id="contactProprietaireAffichage" class="form-control info-recuperee" readonly />
         </div>
         <div class="col-md-4 mb-3">
-            <label class="form-label">💵 Montant Sélectionné</label>
-            <input type="number" id="montant" class="form-control" readonly style="color: #006400; font-weight: bold;" />
-            <label class="form-label mt-3">📝 Observation</label>
-            <input type="text" id="observation" class="form-control" placeholder="Mois de ... payé par ..." />
-        </div>
-    </div>
-
-    <div class="d-grid gap-2 mt-4">
-      <button onclick="validerPaiement()" class="btn btn-success btn-lg">Valider le Paiement</button>
-      <button id="toggleHistoriqueBtn" class="btn btn-outline-secondary" onclick="toggleHistorique()">Afficher l'historique</button>
-    </div>
-
-    <div class="modal fade" id="modalRecu" tabindex="-1">
-        <div class="modal-dialog modal-md">
-            <div class="modal-content">
-                <div class="modal-header border-0 pb-0"><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body" id="recuContent"></div>
-                <div class="modal-footer border-0 pt-0">
-                  <button class="btn btn-primary w-100" onclick="imprimerRecuDepuisModale()">🖨️ Imprimer le reçu</button>
+            <label for="coutMensuelAffichage" class="form-label">💰 Coût Mensuel (FCFA)</label>
+            <div class="input-group">
+                <input type="number" id="coutMensuelAffichage" class="form-control info-recuperee" readonly />
+                <div class="input-group-append">
+                    <button class="btn btn-info admin-only" type="button" id="btnModifierCout" onclick="toggleModificationCout()">Modifier</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="historiqueSection" style="display:none;" class="mt-4">
-      <h4 class="text-primary">📋 Historique des paiements de cet appartement</h4>
-      <div class="table-responsive">
-          <table class="table table-bordered table-striped">
-              <thead>
-                  <tr>
-                      <th>Mois</th>
-                      <th>Montant</th>
-                      <th>Type</th>
-                      <th>Observation</th>
-                      <th>Action</th>
-                  </tr>
-              </thead>
-              <tbody id="historiquePaiements"></tbody>
-          </table>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">📅 Mois à payer</label>
+            <select id="mois" class="form-select" multiple size="8" onchange="calculerCumul()"></select>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">💰 Dejà Payé (Cumulé FCFA)</label>
+            <input type="text" id="montantCumulePaye" class="form-control" readonly />
+            
+            <label class="form-label mt-3">🚨 Total des Retards (FCFA)</label>
+            <input type="text" id="montantRetards" class="form-control" readonly />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">💵 Montant Sélectionné (FCFA)</label>
+            <input type="number" id="montant" class="form-control" readonly style="color: #006400; font-weight: bold;" />
+            
+            <label class="form-label mt-3">📝 Observation</label>
+            <input type="text" id="observation" class="form-control" placeholder="Note ou référence" />
+        </div>
+    </div>
+
+    <div id="zoneAvancesDisponibles" class="p-3 mb-3 d-none text-center border shadow-sm">
+        <h6 class="text-primary fw-bold mb-2">🎁 Avances disponibles détectées !</h6>
+        <p id="infoMoisAvance" class="small mb-2"></p>
+        <button onclick="appliquerPaiementParAvance()" class="btn btn-primary btn-sm">Utiliser les avances pour payer</button>
+    </div>
+
+    <div class="d-grid gap-2 mb-3">
+      <button onclick="validerPaiement()" class="btn btn-success" id="btnValiderPaiement">Ajouter Paiement</button>
+      <div class="row g-2">
+          <div class="col-12"><button onclick="ajouterAvance()" class="btn btn-outline-primary w-100">Ajouter Avance</button></div>
+      </div>
+      <button onclick="genererRapportGeneral()" class="btn btn-primary">📊 Rapport Général de Location</button>
+      <button id="toggleHistoriqueBtn" class="btn btn-outline-secondary">Afficher l'historique</button>
+    </div>
+
+    <div class="modal fade" id="modalRapport" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-dark text-white">
+            <h5 class="modal-title font-monospace">ÉTAT FINANCIER DÉTAILLÉ</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="rapportContent"></div>
+          <div class="modal-footer no-print">
+            <button class="btn btn-info" onclick="copierRapportWhatsApp()">Copier WhatsApp</button>
+            <button class="btn btn-outline-dark" onclick="imprimerParIsolation()">Imprimer Rapport Professionnel</button>
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modalRecu" tabindex="-1">
+      <div class="modal-dialog modal-md">
+        <div class="modal-content">
+          <div class="modal-header border-0 pb-0">
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="recuContent"></div>
+          <div class="modal-footer border-0 pt-0 d-flex flex-column gap-2">
+            <button class="btn btn-info w-100" id="btnCopierWhatsAppRecu">Copier WhatsApp</button>
+            <button class="btn btn-primary w-100" onclick="imprimerRecuDepuisModale()">🖨️ Imprimer ce reçu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modalRestauration" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title">Restauration terminée</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="restaurationBody"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="location.reload()">OK - Actualiser</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="historiqueSection">
+      <h4 class="text-primary d-flex justify-content-between align-items-center">
+          📋 Historique des paiements
+          <div class="d-flex gap-2">
+              <input type="date" id="filtreDate" class="form-control form-control-sm" style="width: 150px;" onchange="afficherHistorique()">
+              <button class="btn btn-sm btn-light border" onclick="document.getElementById('filtreDate').value=''; afficherHistorique();">Réinitialiser</button>
+          </div>
+      </h4>
+      <p class="text-muted small">💡 Cliquez sur une ligne pour prévisualiser et imprimer le reçu.</p>
+      <div class="table-responsive"> 
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr><th>Appartement</th><th>Mois</th><th>Montant</th><th>Type</th><th>Observation</th><th>Date/Heure</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="historiquePaiements"></tbody>
+        </table>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
-    // Variables globales
-    const selectAppartement = document.getElementById('selectAppartement');
-    const selectProprietaire = document.getElementById('selectProprietaire');
+    // --- LOGIQUE DE SÉCURITÉ ET ACCÈS ---
+    function verifierAcces() {
+      const session = JSON.parse(localStorage.getItem('smartloc_session'));
+      if (!session) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      document.getElementById('userNameDisplay').textContent = `${session.role.toUpperCase()} : ${session.nom}`;
+
+      if (session.role === 'admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.setProperty('display', 'block', 'important'));
+      }
+    }
+
+    function deconnexion() {
+      localStorage.removeItem('smartloc_session');
+      window.location.href = 'login.html';
+    }
+
+    const select = document.getElementById('selectAppartement');
+    const historique = document.getElementById('historiquePaiements');
+    const historiqueSection = document.getElementById('historiqueSection');
+    const toggleHistoriqueBtn = document.getElementById('toggleHistoriqueBtn');
+    const nomProprietaireAffichage = document.getElementById('nomProprietaireAffichage'); 
+    const contactProprietaireAffichage = document.getElementById('contactProprietaireAffichage'); 
     const coutMensuelAffichage = document.getElementById('coutMensuelAffichage');
     const moisInput = document.getElementById('mois');
     const montantInput = document.getElementById('montant');
     const montantRetardsDisplay = document.getElementById('montantRetards');
+    const montantCumulePayeDisplay = document.getElementById('montantCumulePaye');
+    const observationInput = document.getElementById('observation');
     const navbarDate = document.getElementById('navbarDate');
-    let modalRecu = null;
-    
-    function showError(message) {
-      const errorEl = document.getElementById('errorMessage');
-      if(errorEl) {
-        errorEl.textContent = message;
-        errorEl.style.display = 'block';
-        setTimeout(() => { errorEl.style.display = 'none'; }, 5000);
-      } else { alert(message); }
+    const modalRapport = new bootstrap.Modal(document.getElementById('modalRapport'));
+    const modalRecu = new bootstrap.Modal(document.getElementById('modalRecu'));
+    const modalRestauration = new bootstrap.Modal(document.getElementById('modalRestauration'));
+    const zoneAvances = document.getElementById('zoneAvancesDisponibles');
+    const infoMoisAvance = document.getElementById('infoMoisAvance');
+
+    function sauvegarderTout() {
+        const keys = ['appartements', 'paiements', 'smartloc_params', 'smartloc_users', 'compta_config', 'retraits_commission'];
+        const backup = {};
+        keys.forEach(key => {
+            backup[key] = JSON.parse(localStorage.getItem(key)) || null;
+        });
+        
+        const dataStr = JSON.stringify(backup, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportName = 'SmartLoc_Backup_' + new Date().toISOString().split('T')[0] + '.json';
+
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportName);
+        linkElement.click();
     }
 
-    // --- INITIALISATION SÉCURISÉE POUR GITHUB PAGES ---
-    function init() {
-      try {
-        const sessionData = localStorage.getItem('smartloc_session');
-        if (!sessionData) {
-          window.location.href = 'login.html';
-          return;
+    function restaurerTout() {
+        if(confirm("Attention : Restaurer les données écrasera TOUTE votre application actuelle. Continuer ?")) {
+            document.getElementById('importFile').click();
         }
-        const session = JSON.parse(sessionData);
+    }
 
-        // Affichage Admin / Utilisateur
-        const userDisplay = document.getElementById('userNameDisplay');
-        if(userDisplay) userDisplay.textContent = `${session.role.toUpperCase()} : ${session.nom}`;
-        
-        if (session.role === 'admin') {
-          document.querySelectorAll('.admin-only').forEach(el => {
-            el.style.setProperty('display', 'block', 'important');
-          });
-        }
-        
-        const modalElement = document.getElementById('modalRecu');
-        if (modalElement && typeof bootstrap !== 'undefined') {
-          modalRecu = new bootstrap.Modal(modalElement);
-        }
-        
-        chargerFiltreProprietaire();
+    function importerFichier(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const backup = JSON.parse(e.target.result);
+                let logs = "<ul>";
+                Object.keys(backup).forEach(key => {
+                    if(backup[key]) {
+                        localStorage.setItem(key, JSON.stringify(backup[key]));
+                        logs += `<li>Module <strong>${key}</strong> restauré avec succès.</li>`;
+                    }
+                });
+                logs += "</ul><p class='text-muted'>Cliquez sur OK pour actualiser l'interface.</p>";
+                
+                document.getElementById('restaurationBody').innerHTML = logs;
+                modalRestauration.show();
+            } catch (err) {
+                alert("Erreur lors de la lecture du fichier JSON.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function initialiserPage() {
+        verifierAcces();
         chargerAppartements();
         mettreAJourNavbarDate();
-      } catch (e) {
-        console.error("Erreur d'initialisation:", e);
-      }
-    }
-
-    function deconnexion() { 
-      localStorage.removeItem('smartloc_session'); 
-      window.location.href = 'login.html'; 
-    }
-
-    function actualiserCalculRetards(idx, dateEntree, loyer) {
-        if (!dateEntree || !loyer) {
-            montantRetardsDisplay.value = "0 FCFA (0 mois)";
-            return;
-        }
-        try {
-          const paiementsMap = JSON.parse(localStorage.getItem('paiements')) || {};
-          const paiements = paiementsMap[idx] || [];
-          const now = new Date();
-          const moisActuelStr = now.toISOString().slice(0, 7); 
-          let total = 0, nb = 0;
-          let d = new Date(dateEntree.split('-')[0], parseInt(dateEntree.split('-')[1]) - 1, 1);
-          while (d.toISOString().slice(0, 7) < moisActuelStr) {
-              const m = d.toISOString().slice(0, 7);
-              const estPaye = paiements.some(p => p.mois === m && (p.type === 'Paiement' || p.type === 'Avance'));
-              if (!estPaye) { total += parseFloat(loyer); nb++; }
-              d.setMonth(d.getMonth() + 1);
-          }
-          montantRetardsDisplay.value = `${total.toLocaleString()} FCFA (${nb} mois)`;
-        } catch (error) { montantRetardsDisplay.value = "0 FCFA (erreur)"; }
-    }
-
-    function chargerFiltreProprietaire() {
-        const proprios = JSON.parse(localStorage.getItem('smartloc_proprios')) || [];
-        if(selectProprietaire) {
-          selectProprietaire.innerHTML = '<option value="">-- Tous les propriétaires --</option>';
-          proprios.forEach(p => { 
-            const opt = document.createElement('option'); 
-            opt.value = p.nom; opt.textContent = p.nom; 
-            selectProprietaire.appendChild(opt); 
-          });
-        }
-    }
-
-    function filtrerAppartementsParProprio() { chargerAppartements(); }
-
-    function chargerAppartements() {
-      const data = JSON.parse(localStorage.getItem('appartements')) || [];
-      const filtre = selectProprietaire ? selectProprietaire.value : "";
-      if(selectAppartement) {
-        selectAppartement.innerHTML = '<option value="">-- Sélectionner un appartement --</option>';
-        data.forEach((apt, index) => { 
-          if (!filtre || apt.proprietaireNom === filtre) {
-            const opt = document.createElement('option'); opt.value = index; 
-            opt.textContent = `${apt.nom} - ${apt.locataire}`;
-            selectAppartement.appendChild(opt);
-          }
-        });
-      }
-    }
-
-    function afficherDetailsAppartement() {
-        const idx = selectAppartement.value;
-        if (idx === "") return;
-        const data = JSON.parse(localStorage.getItem('appartements')) || [];
-        const a = data[idx];
-        if (!a) return;
-        document.getElementById('nomProprietaireAffichage').value = a.proprietaireNom || "N/A";
-        document.getElementById('contactProprietaireAffichage').value = a.proprietaireContact || "N/A";
-        document.getElementById('localisationAffichage').value = `${a.ville || ''} / ${a.quartier || ''}`;
-        coutMensuelAffichage.value = a.cout || 0;
-        const paiements = (JSON.parse(localStorage.getItem('paiements')) || {})[idx] || [];
-        const cumul = paiements.reduce((acc, p) => acc + (p.type === 'Paiement' ? p.montant : 0), 0);
-        document.getElementById('montantCumulePaye').value = `${cumul.toLocaleString()} FCFA`;
-        actualiserCalculRetards(idx, a.dateEntree || a.dateIntegration, a.cout);
-        genererListeMois(a.dateEntree || a.dateIntegration, idx);
-        if(document.getElementById('historiqueSection').style.display === 'block') chargerHistorique();
-    }
-
-    function genererListeMois(dateIn, idx) {
-        if(!moisInput) return;
-        moisInput.innerHTML = '';
-        if (!dateIn) return;
-        const paiements = (JSON.parse(localStorage.getItem('paiements')) || {})[idx] || [];
-        let start = new Date(dateIn.split('-')[0], parseInt(dateIn.split('-')[1])-1, 1);
-        for (let i = 0; i < 600; i++) {
-            const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
-            const val = d.toISOString().slice(0, 7);
-            const opt = document.createElement('option'); opt.value = val;
-            opt.textContent = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase();
-            if (paiements.find(p => p.mois === val && p.type === 'Paiement')) { 
-              opt.disabled = true; opt.className = "option-paye"; opt.textContent += " (PAYÉ)"; 
-            }
-            moisInput.appendChild(opt);
-        }
-    }
-
-    function calculerCumul() { 
-      if(montantInput) montantInput.value = Array.from(moisInput.selectedOptions).length * (parseFloat(coutMensuelAffichage.value) || 0); 
-    }
-
-    function validerPaiement() {
-        const idx = selectAppartement.value;
-        const moisS = Array.from(moisInput.selectedOptions);
-        if (!idx || !moisS.length) { showError('Sélectionnez un appartement et au moins un mois'); return; }
-        const p = JSON.parse(localStorage.getItem('paiements')) || {}; 
-        if (!p[idx]) p[idx] = [];
-        moisS.forEach(o => {
-          p[idx].push({ 
-              id: Date.now() + Math.random(), mois: o.value, montant: parseFloat(coutMensuelAffichage.value), 
-              type: 'Paiement', observation: document.getElementById('observation').value || "Paiement de loyer",
-              dateEnregistrement: new Date().toISOString() 
-          });
-        });
-        localStorage.setItem('paiements', JSON.stringify(p));
-        document.getElementById('successOverlay').style.display = 'flex';
-        setTimeout(() => { 
-            document.getElementById('successOverlay').style.display = 'none'; 
-            afficherRecu(idx, p[idx][p[idx].length - 1].id);
-            afficherDetailsAppartement(); 
-        }, 800);
-    }
-
-    function afficherRecu(aptIdx, payId) {
-        const apt = (JSON.parse(localStorage.getItem('appartements')) || [])[aptIdx];
-        const pay = ((JSON.parse(localStorage.getItem('paiements')) || {})[aptIdx] || []).find(x => x.id == payId);
-        const dateNow = new Date().toLocaleString('fr-FR');
-        document.getElementById('recuContent').innerHTML = `
-            <div class="recu-pro-container" id="printableRecu">
-                <div class="d-flex justify-content-between align-items-center recu-header">
-                    <img src="logo.png" style="height:50px;" onerror="this.style.display='none'">
-                    <div class="text-center"><h5 class="mb-0">REÇU DE PAIEMENT</h5><small>N° ${Math.floor(pay.id/100000)}</small></div>
-                    <img src="timbre.png" style="height:50px;" onerror="this.style.display='none'">
-                </div>
-                <p class="mt-3">L'an deux mil sept et le <b>${dateNow}</b> à ${apt.ville || 'Non spécifié'}</p>
-                <p><b>Locataire :</b> ${apt.locataire}<br><b>Bien :</b> ${apt.nom}<br><b>Mois :</b> ${pay.mois}<br><b>Montant :</b> ${pay.montant.toLocaleString()} FCFA</p>
-                <div class="d-flex justify-content-between mt-4"><span>Signature Locataire</span><span><b>Direction SmartLoc</b></span></div>
-                ${apt.signatureProprio ? `<div class="text-end"><img src="${apt.signatureProprio}" style="max-height:60px;"></div>` : ''}
-            </div>`;
-        if (modalRecu) modalRecu.show();
-    }
-
-    function imprimerRecuDepuisModale() {
-        document.getElementById('printArea').innerHTML = document.getElementById('recuContent').innerHTML;
-        window.print();
-    }
-
-    function toggleHistorique() {
-        const sect = document.getElementById('historiqueSection');
-        sect.style.display = (sect.style.display === 'none') ? 'block' : 'none';
-        if(sect.style.display === 'block') chargerHistorique();
-    }
-
-    function chargerHistorique() {
-        const idx = selectAppartement.value;
-        if (idx === "") return;
-        const p = ((JSON.parse(localStorage.getItem('paiements')) || {})[idx] || []);
-        const body = document.getElementById('historiquePaiements');
-        const session = JSON.parse(localStorage.getItem('smartloc_session') || '{}');
-        const canDelete = session && session.role === 'admin';
-        
-        body.innerHTML = p.map((x, i) => `
-            <tr>
-                <td>${x.mois || 'N/A'}</td>
-                <td>${(x.montant || 0).toLocaleString()} FCFA</td>
-                <td>${x.type || 'Paiement'}</td>
-                <td><small>${x.observation || ''}</small></td>
-                <td>${canDelete ? `<button class="btn btn-sm btn-danger" onclick="supprimerPaiement('${idx}', ${i})">Supprimer</button>` : '<span class="badge bg-secondary">🔒</span>'}</td>
-            </tr>`).join('');
-    }
-
-    function supprimerPaiement(aptIdx, payIdx) {
-        if(!confirm("Supprimer ce paiement ?")) return;
-        let p = JSON.parse(localStorage.getItem('paiements')) || {};
-        if (p[aptIdx]) {
-          p[aptIdx].splice(payIdx, 1);
-          localStorage.setItem('paiements', JSON.stringify(p));
-          afficherDetailsAppartement();
-        }
     }
 
     function mettreAJourNavbarDate() {
-        if (navbarDate) navbarDate.textContent = `| ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+        const d = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        navbarDate.textContent = `| ${d.toLocaleDateString('fr-FR', options)}`;
     }
-    
-    // --- Lancement propre ---
-    window.addEventListener('load', init);
 
-    // --- PWA ---
+    function formaterMoisTexte(valeurMois) {
+        if(!valeurMois || valeurMois.length < 7) return valeurMois;
+        const parts = valeurMois.split('-');
+        const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1);
+        const texte = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        return texte.charAt(0).toUpperCase() + texte.slice(1);
+    }
+
+    function genererListeMois(dateIntegrationStr, indexAppartement) {
+        moisInput.innerHTML = '';
+        const maintenant = new Date();
+        const moisActuelStr = maintenant.toISOString().slice(0, 7);
+        let start;
+        const paiementsGlobal = JSON.parse(localStorage.getItem('paiements')) || {};
+        const paiementsApt = paiementsGlobal[indexAppartement] || [];
+        const cout = parseFloat(coutMensuelAffichage.value) || 0;
+        let totalRetards = 0;
+        let totalDejaPaye = 0;
+        let nombreMoisRetard = 0;
+        
+        if (dateIntegrationStr) {
+            const parts = dateIntegrationStr.split('-');
+            start = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1);
+        } else {
+            start = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1);
+        }
+        
+        for (let i = 0; i < 600; i++) {
+            const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+            const value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+            const label = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase();
+            const pFound = paiementsApt.find(p => p.mois === value && p.type === 'Paiement');
+            const estDansLePasse = value < moisActuelStr;
+            const option = document.createElement('option');
+            option.value = value;
+            if (pFound) {
+                option.textContent = `${label} (PAYÉ ✅)`;
+                option.style.color = "#999";
+                totalDejaPaye += parseFloat(pFound.montant);
+            } else if (estDansLePasse) {
+                option.textContent = `${label} (RETARD ⚠️)`;
+                option.style.color = "#dc3545";
+                option.style.fontWeight = "bold";
+                totalRetards += cout;
+                nombreMoisRetard++;
+            } else {
+                option.textContent = label;
+            }
+            moisInput.appendChild(option);
+        }
+
+        const totalAvancesGlobal = paiementsApt.filter(p => p.type === 'Avance').reduce((sum, p) => sum + parseFloat(p.montant), 0);
+        const dataApts = JSON.parse(localStorage.getItem('appartements')) || [];
+        const avanceInitiale = parseFloat(dataApts[indexAppartement]?.avance) || 0;
+        const totalLoyerPayeEquivalent = paiementsApt.filter(p => p.type === 'Paiement' && p.observation.includes("Payé via Avance")).length * cout;
+        const soldeAvanceDisponible = (totalAvancesGlobal + avanceInitiale) - totalLoyerPayeEquivalent;
+        
+        totalDejaPaye += totalAvancesGlobal;
+
+        if (soldeAvanceDisponible >= cout) {
+            const nbMoisPossibles = Math.floor(soldeAvanceDisponible / cout);
+            zoneAvances.classList.remove('d-none');
+            infoMoisAvance.innerHTML = `Solde total (Initial + Dépôts) : <strong>${soldeAvanceDisponible.toLocaleString()} FCFA</strong>. Couvre <strong>${nbMoisPossibles} mois</strong>.`;
+        } else if (soldeAvanceDisponible > 0) {
+            zoneAvances.classList.remove('d-none');
+            infoMoisAvance.innerHTML = `Solde d'avance total disponible : <strong>${soldeAvanceDisponible.toLocaleString()} FCFA</strong>.`;
+        } else {
+            zoneAvances.classList.add('d-none');
+        }
+
+        montantRetardsDisplay.value = `${totalRetards.toLocaleString('fr-FR')} FCFA (${nombreMoisRetard} mois)`;
+        montantCumulePayeDisplay.value = `${totalDejaPaye.toLocaleString('fr-FR')} FCFA`;
+    }
+
+    function appliquerPaiementParAvance() {
+        const cout = parseFloat(coutMensuelAffichage.value);
+        const index = select.value;
+        const paiementsGlobal = JSON.parse(localStorage.getItem('paiements')) || {};
+        const paiementsApt = paiementsGlobal[index] || [];
+        const dataApt = JSON.parse(localStorage.getItem('appartements')) || [];
+        const avanceInitiale = parseFloat(dataApt[index]?.avance) || 0;
+        const totalAvancesGlobal = paiementsApt.filter(p => p.type === 'Avance').reduce((sum, p) => sum + parseFloat(p.montant), 0);
+        const totalLoyerPayeEquivalent = paiementsApt.filter(p => p.type === 'Paiement' && p.observation.includes("Payé via Avance")).length * cout;
+        
+        let soldeAvance = (totalAvancesGlobal + avanceInitiale) - totalLoyerPayeEquivalent;
+        let moisCoches = 0;
+        
+        Array.from(moisInput.options).forEach(opt => {
+            if (opt.textContent.includes('RETARD') && soldeAvance >= cout) {
+                opt.selected = true;
+                soldeAvance -= cout;
+                moisCoches++;
+            }
+        });
+        if (moisCoches > 0) {
+            observationInput.value = "Payé via Avance";
+            calculerCumul();
+            alert(`${moisCoches} mois sélectionnés.`);
+        }
+    }
+
+    function calculerCumul() {
+        const cout = parseFloat(coutMensuelAffichage.value) || 0;
+        const nbMois = Array.from(moisInput.selectedOptions).length;
+        montantInput.value = cout * nbMois;
+    }
+
+    function chargerAppartements() {
+      const data = JSON.parse(localStorage.getItem('appartements')) || [];
+      select.innerHTML = '';
+      if (data.length === 0) {
+          select.innerHTML = '<option disabled selected>Aucun appartement</option>';
+          return;
+      }
+      data.forEach((apt, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${apt.nom} – ${apt.locataire}`; 
+        select.appendChild(option);
+      });
+      afficherDetailsAppartement();
+    }
+
+    function afficherDetailsAppartement() {
+        const index = select.value;
+        const data = JSON.parse(localStorage.getItem('appartements')) || [];
+        if (data[index]) {
+            const apt = data[index];
+            nomProprietaireAffichage.value = apt.proprietaireNom || 'N/A';
+            contactProprietaireAffichage.value = apt.proprietaireContact || 'N/A';
+            coutMensuelAffichage.value = apt.cout || 0;
+            genererListeMois(apt.dateEntree || apt.date, index);
+            calculerCumul();
+        }
+    }
+
+    function showSuccessAnimation() {
+        const overlay = document.getElementById('successOverlay');
+        overlay.style.display = 'flex';
+        setTimeout(() => { overlay.style.display = 'none'; }, 1500);
+    }
+
+    function validerPaiement() {
+      const index = select.value;
+      const moisSelectionnes = Array.from(moisInput.selectedOptions);
+      const coutUnitaire = parseFloat(coutMensuelAffichage.value);
+      if (moisSelectionnes.length === 0) return alert("Sélectionnez des mois.");
+      
+      const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
+      if (!paiements[index]) paiements[index] = [];
+      
+      moisSelectionnes.forEach(opt => {
+          if (!opt.textContent.includes('PAYÉ')) {
+              paiements[index].push({ 
+                  id: Date.now() + Math.random(), 
+                  mois: opt.value, 
+                  montant: coutUnitaire, 
+                  type: 'Paiement', 
+                  observation: observationInput.value || '', 
+                  dateEnregistrement: new Date().toISOString() 
+              });
+          }
+      });
+      
+      localStorage.setItem('paiements', JSON.stringify(paiements));
+      showSuccessAnimation();
+      observationInput.value = "";
+      afficherDetailsAppartement();
+      if (historiqueSection.style.display === 'block') afficherHistorique();
+    }
+
+    function ajouterAvance() {
+        const index = select.value;
+        const montantAvance = prompt("Saisir le montant de l'avance supplémentaire (FCFA) :");
+        if (!montantAvance || isNaN(montantAvance)) return;
+        
+        const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
+        if (!paiements[index]) paiements[index] = [];
+        
+        paiements[index].push({ 
+            id: Date.now(), mois: new Date().toISOString().slice(0, 7), montant: parseFloat(montantAvance), 
+            type: 'Avance', observation: "Dépôt Avance supplémentaire", dateEnregistrement: new Date().toISOString() 
+        });
+        
+        localStorage.setItem('paiements', JSON.stringify(paiements));
+        showSuccessAnimation();
+        afficherDetailsAppartement();
+        if (historiqueSection.style.display === 'block') afficherHistorique();
+    }
+
+    function genererRapportGeneral() {
+        const index = select.value;
+        const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+        const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
+        const params = JSON.parse(localStorage.getItem('smartloc_params')) || {};
+        const apt = appartements[index];
+        const dataPaiements = paiements[index] || [];
+        if (!apt) return alert("Sélectionnez un appartement.");
+        const totalPaye = dataPaiements.reduce((sum, p) => sum + parseFloat(p.montant), 0);
+        const totalRetardStr = montantRetardsDisplay.value;
+        const totalRetardVal = parseInt(totalRetardStr.replace(/[^0-9]/g, '')) || 0;
+        
+        const sigProprioImg = params.pdgSig ? `<img src="${params.pdgSig}" class="signature-img">` : (apt.signatureProprio ? `<img src="${apt.signatureProprio}" class="signature-img">` : '');
+        const nomPDG = params.pdgNom || apt.proprietaireNom;
+        const sigLocataireImg = apt.signatureLocataire ? `<img src="${apt.signatureLocataire}" class="signature-img">` : '';
+        
+        let lignesPaiement = "";
+        dataPaiements.sort((a, b) => b.mois.localeCompare(a.mois)).forEach(p => {
+            const datePaye = p.dateEnregistrement ? new Date(p.dateEnregistrement).toLocaleDateString() : 'N/A';
+            const moisTexte = p.type === 'Avance' ? "Avance" : formaterMoisTexte(p.mois);
+            lignesPaiement += `<tr><td>${moisTexte}</td><td>${p.type}</td><td>${datePaye}</td><td class="text-end fw-bold">${p.montant.toLocaleString()} FCFA</td><td>${p.observation || '-'}</td></tr>`;
+        });
+        const content = `
+            <div style="background: white; color: black; padding: 5px;">
+                <div class="text-center mb-3">
+                    <h5 class="mb-0 fw-bold" style="color:#003366;">RAPPORT FINANCIER DE LOCATION</h5>
+                    <hr style="margin: 5px 0;">
+                </div>
+                <div class="row mb-3 bg-light p-2 mx-0 rounded border">
+                    <div class="col-6 border-end">
+                        <small class="text-muted d-block">PROPRIÉTAIRE</small>
+                        <strong>${apt.proprietaireNom}</strong><br>
+                        <small>${apt.proprietaireContact}</small>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">LOCATAIRE / BIEN</small>
+                        <strong>${apt.locataire}</strong><br>
+                        <small>${apt.nom} (${apt.ville || ''} - ${apt.quartier || ''})</small>
+                    </div>
+                </div>
+                <table class="table table-sm table-striped table-bordered mb-3">
+                    <thead><tr class="table-secondary"><th>Objet / Mois</th><th>Type</th><th>Date</th><th>Montant</th><th>Note</th></tr></thead>
+                    <tbody>${lignesPaiement}</tbody>
+                </table>
+                <div class="bg-light p-2 border mb-3 shadow-sm">
+                    <div class="row text-center">
+                        <div class="col-4 small"><strong>PAYÉ</strong><br>${totalPaye.toLocaleString()} FCFA</div>
+                        <div class="col-4 small text-danger"><strong>RETARDS</strong><br>${totalRetardStr}</div>
+                        <div class="col-4 small text-primary"><strong>SOLDE</strong><br>${(totalPaye - totalRetardVal).toLocaleString()} FCFA</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 text-center"><small class="fw-bold">LOCATAIRE</small><br>${sigLocataireImg}</div>
+                    <div class="col-6 text-center">
+                        <small class="fw-bold">SIGNATURE PDG</small><br>
+                        ${sigProprioImg}
+                        <small class="d-block mt-1 fw-bold">${nomPDG}</small>
+                    </div>
+                </div>
+            </div>`;
+        document.getElementById('rapportContent').innerHTML = content;
+        modalRapport.show();
+    }
+
+    function imprimerParIsolation() {
+        const rapportHTML = document.getElementById('rapportContent').innerHTML;
+        const printArea = document.getElementById('printArea');
+        printArea.innerHTML = rapportHTML;
+        setTimeout(() => { window.print(); setTimeout(() => { printArea.innerHTML = ''; }, 1000); }, 500);
+    }
+
+    function ouvrirModaleRecu(paiementId) {
+        const index = select.value;
+        const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+        const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
+        const params = JSON.parse(localStorage.getItem('smartloc_params')) || {};
+        const apt = appartements[index];
+        const p = paiements[index].find(item => item.id == paiementId);
+        if (!p || !apt) return;
+        
+        const nomPDG = params.pdgNom || "LE GESTIONNAIRE";
+        const refRecu = p.id.toString().slice(-6);
+
+        document.getElementById('btnCopierWhatsAppRecu').onclick = () => {
+            const moisTexteMsg = p.type === 'Avance' ? "AVANCE SUR LOYER" : formaterMoisTexte(p.mois);
+            const msg = `*📄 REÇU SMARTLOC*\n*RÉF : ${refRecu}*\n🏠 *BIEN :* ${apt.nom}\n👤 *LOCATAIRE :* ${apt.locataire}\n📅 *MOIS :* ${moisTexteMsg}\n💰 *MONTANT :* ${p.montant.toLocaleString()} FCFA\n📝 *NOTE :* ${p.observation || '-'}\n✅ *STATUT :* PAYÉ\n\n*PDG : ${nomPDG}*`;
+            navigator.clipboard.writeText(msg).then(() => alert("Reçu copié pour WhatsApp !"));
+        };
+
+        const moisTexte = p.type === 'Avance' ? "AVANCE SUR LOYER" : formaterMoisTexte(p.mois);
+        const sigProprioImg = params.pdgSig ? `<img src="${params.pdgSig}" class="signature-img">` : (apt.signatureProprio ? `<img src="${apt.signatureProprio}" class="signature-img">` : '');
+        const sigLocataireImg = apt.signatureLocataire ? `<img src="${apt.signatureLocataire}" class="signature-img">` : '';
+        const content = `
+            <div class="recu-pro-container">
+                <div class="recu-header d-flex justify-content-between align-items-center">
+                    <img src="logo.png" style="max-width:80px;">
+                    <div class="text-center">
+                        <h5 class="fw-bold text-uppercase mb-0" style="color:#003366;">REÇU DE PAIEMENT</h5>
+                        <small class="text-muted">RÉF: ${refRecu}</small>
+                    </div>
+                    <img src="timbre.png" style="max-width:60px;">
+                </div>
+                <div class="p-2 border bg-light mb-3 rounded">
+                    <strong>Bien immobilier :</strong> ${apt.nom} | <strong>Locataire :</strong> ${apt.locataire}
+                </div>
+                <table class="table table-bordered mb-3">
+                    <tr class="table-light"><th class="small">OBJET DU PAIEMENT</th><th class="small text-end">MONTANT</th></tr>
+                    <tr>
+                        <td>${moisTexte}</td>
+                        <td class="text-end fw-bold">${p.montant.toLocaleString()} FCFA</td>
+                    </tr>
+                </table>
+                <div class="text-center bg-dark text-white p-2">
+                    <h5 class="mb-0">TOTAL : ${p.montant.toLocaleString()} FCFA</h5>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-6 text-center"><small class="fw-bold">LOCATAIRE</small><br>${sigLocataireImg}</div>
+                    <div class="col-6 text-center">
+                        <small class="fw-bold">SIGNATURE PDG</small><br>
+                        ${sigProprioImg}
+                        <small class="d-block mt-1 fw-bold">${nomPDG}</small>
+                    </div>
+                </div>
+            </div>`;
+        document.getElementById('recuContent').innerHTML = content;
+        modalRecu.show();
+    }
+
+    function imprimerRecuDepuisModale() {
+        const recuHTML = document.getElementById('recuContent').innerHTML;
+        const printArea = document.getElementById('printArea');
+        printArea.innerHTML = recuHTML;
+        setTimeout(() => { window.print(); setTimeout(() => { printArea.innerHTML = ''; }, 1000); }, 500);
+    }
+
+    function copierRapportWhatsApp() {
+        const index = select.value;
+        const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+        const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
+        const params = JSON.parse(localStorage.getItem('smartloc_params')) || {};
+        const apt = appartements[index];
+        const dataPaiements = paiements[index] || [];
+        if (!apt) return;
+
+        const nomPDG = params.pdgNom || "LE GESTIONNAIRE";
+        const totalPaye = dataPaiements.reduce((sum, p) => sum + parseFloat(p.montant), 0);
+        const totalRetardStr = montantRetardsDisplay.value;
+        const totalRetardVal = parseInt(totalRetardStr.replace(/[^0-9]/g, '')) || 0;
+        const refRapport = Date.now().toString().slice(-6);
+
+        let detailMois = "";
+        dataPaiements.sort((a, b) => b.mois.localeCompare(a.mois)).forEach(p => {
+            const moisLabel = p.type === 'Avance' ? "Avance" : formaterMoisTexte(p.mois);
+            detailMois += `\n- ${moisLabel} : ${p.montant.toLocaleString()} FCFA`;
+        });
+
+        let msg = `*📊 RAPPORT SMARTLOC*\n*RÉF : ${refRapport}*\n\n🏠 *BIEN :* ${apt.nom}\n👤 *LOCATAIRE :* ${apt.locataire}\n\n*Historique des paiements :*${detailMois}\n\n✅ *TOTAL PAYÉ :* ${totalPaye.toLocaleString()} FCFA\n⚠️ *RETARDS :* ${totalRetardStr}\n📌 *SOLDE :* ${(totalPaye - totalRetardVal).toLocaleString()} FCFA\n\n*PDG : ${nomPDG}*`;
+        
+        navigator.clipboard.writeText(msg).then(() => alert("Rapport détaillé copié pour WhatsApp !"));
+    }
+
+    function afficherHistorique() {
+      const index = select.value;
+      const appartements = JSON.parse(localStorage.getItem('appartements')) || [];
+      const aptNom = appartements[index]?.nom || "Inconnu";
+      const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
+      const data = paiements[index] || [];
+      const filtreDate = document.getElementById('filtreDate').value;
+      
+      const session = JSON.parse(localStorage.getItem('smartloc_session')) || {};
+      const isAdmin = (session.role === 'admin');
+
+      historique.innerHTML = '';
+      let dataFiltree = [...data];
+      if (filtreDate) dataFiltree = dataFiltree.filter(p => p.dateEnregistrement.startsWith(filtreDate));
+
+      if (dataFiltree.length === 0) {
+        historique.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Aucun historique</td></tr>';
+        return;
+      }
+
+      dataFiltree.sort((a, b) => b.id - a.id).forEach(p => {
+        const row = document.createElement('tr');
+        row.setAttribute("onclick", `ouvrirModaleRecu(${p.id})`);
+        
+        const dateObj = p.dateEnregistrement ? new Date(p.dateEnregistrement) : null;
+        const horodatage = dateObj ? dateObj.toLocaleString('fr-FR') : 'N/A';
+
+        let actionBtn = "";
+        if (isAdmin) {
+          actionBtn = `<button class="btn btn-sm btn-danger" onclick="supprimerPaiement(${index}, ${p.id})">Suppr</button>`;
+        } else {
+          actionBtn = `<span class="badge bg-secondary">Verrouillé</span>`;
+        }
+
+        row.innerHTML = `
+          <td>${aptNom}</td>
+          <td>${p.type === 'Avance' ? "Avance" : formaterMoisTexte(p.mois)}</td>
+          <td>${p.montant.toLocaleString()} FCFA</td>
+          <td>${p.type}</td>
+          <td>${p.observation}</td>
+          <td>${horodatage}</td>
+          <td onclick="event.stopPropagation();">${actionBtn}</td>
+        `;
+        historique.appendChild(row);
+      });
+    }
+
+    function supprimerPaiement(idx, id) {
+        if (!confirm("Supprimer ?")) return;
+        let p = JSON.parse(localStorage.getItem('paiements'));
+        p[idx] = p[idx].filter(x => x.id !== id);
+        localStorage.setItem('paiements', JSON.stringify(p));
+        afficherDetailsAppartement();
+        if (historiqueSection.style.display === 'block') afficherHistorique();
+    }
+
+    function toggleHistorique() {
+      const isHidden = (historiqueSection.style.display === 'none' || !historiqueSection.style.display);
+      historiqueSection.style.display = isHidden ? 'block' : 'none';
+      toggleHistoriqueBtn.textContent = isHidden ? "Masquer l'historique" : "Afficher l'historique";
+      if (isHidden) {
+          afficherHistorique();
+          setTimeout(() => historiqueSection.scrollIntoView({ behavior: 'smooth' }), 100);
+      }
+    }
+
+    select.addEventListener('change', () => { 
+        afficherDetailsAppartement(); 
+        if (historiqueSection.style.display === 'block') afficherHistorique();
+    });
+
+    toggleHistoriqueBtn.addEventListener('click', toggleHistorique);
+    window.onload = initialiserPage;
+  </script>
+
+  <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js').catch(e => console.log('SW fail', e));
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker enregistré !', reg))
+          .catch(err => console.log('Erreur Service Worker', err));
       });
     }
   </script>
-  
-  <script src="synchronisation.js" onerror="console.warn('Sync script non trouvé')"></script>
-  <script src="initialisation.js" onerror="console.warn('Init script non trouvé')"></script>
 </body>
 </html>
