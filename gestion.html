@@ -282,7 +282,7 @@
       </div>
       <div class="col-md-6 mb-3">
         <label class="form-label">🏢 Sélectionner un appartement</label>
-        <select id="selectAppartement" class="form-select" onchange="afficherDetailsAppartement()"></select>
+        <select id="selectAppartement" class="form-select"></select>
       </div>
     </div>
 
@@ -397,47 +397,12 @@
       </div>
     </div>
 
-    <div class="modal fade" id="modalRapport" tabindex="-1">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header bg-dark text-white">
-            <h5 class="modal-title">📑 Rapport</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body" id="rapportContent">
-            <!-- Contenu du rapport généré -->
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-            <button class="btn btn-dark" onclick="imprimerParIsolation('rapportContent')">🖨️ Imprimer</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade" id="modalRecu" tabindex="-1">
-      <div class="modal-dialog modal-md">
-        <div class="modal-content">
-          <div class="modal-header border-0 pb-0">
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body" id="recuContent"></div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-            <button class="btn btn-primary" onclick="imprimerDernierRecu()">🖨️ Imprimer</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div class="modal fade" id="modalRapport" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5 class="modal-title font-monospace">ÉTAT FINANCIER DÉTAILLÉ</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body" id="rapportContent"></div><div class="modal-footer no-print"><button class="btn btn-info" onclick="copierRapportWhatsApp()">Copier WhatsApp</button><button class="btn btn-outline-dark" onclick="imprimerParIsolation('rapportContent')">🖨️ Imprimer Rapport</button><button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button></div></div></div></div>
+    <div class="modal fade" id="modalRecu" tabindex="-1"><div class="modal-dialog modal-md"><div class="modal-content"><div class="modal-header border-0 pb-0"><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="recuContent"></div><div class="modal-footer border-0 pt-0 d-flex flex-column gap-2"><button class="btn btn-info w-100" id="btnCopierWhatsAppRecu" onclick="copierRecuWhatsApp()">Copier WhatsApp</button><button class="btn btn-primary w-100" onclick="imprimerRecuDepuisModale()">🖨️ Imprimer ce reçu</button></div></div></div></div>
     
     <div id="historiqueSection">
       <h4 class="text-primary d-flex justify-content-between align-items-center">📋 Historique des paiements...</h4>
-      <div class="table-responsive">
-        <table class="table table-bordered table-striped">
-          <thead><tr><th>Appartement</th><th>Mois</th><th>Montant</th><th>Type</th><th>Observation</th><th>Date/Heure</th><th>Actions</th></tr></thead>
-          <tbody id="historiquePaiements"></tbody>
-        </table>
-      </div>
+      <div class="table-responsive"><table class="table table-bordered table-striped"><thead><tr><th>Appartement</th><th>Mois</th><th>Montant</th><th>Type</th><th>Observation</th><th>Date/Heure</th><th>Actions</th></tr></thead><tbody id="historiquePaiements"></tbody></table></div>
     </div>
   </div>
 
@@ -522,12 +487,10 @@
             coutMensuelAffichage.classList.remove('info-recuperee');
             document.getElementById('btnModifierCout').textContent = "Sauver";
         } else {
-            const idxStr = select.value;
-            if (!idxStr) return alert("Sélectionnez un appartement.");
-            const idx = parseInt(idxStr, 10);
+            const idx = select.value;
             const data = JSON.parse(localStorage.getItem('appartements')) || [];
             if (data[idx]) {
-                data[idx].cout = parseFloat(coutMensuelAffichage.value) || 0;
+                data[idx].cout = parseFloat(coutMensuelAffichage.value);
                 localStorage.setItem('appartements', JSON.stringify(data));
             }
             coutMensuelAffichage.readOnly = true;
@@ -537,9 +500,7 @@
         }
     }
 
-    // Calcul des retards - correction : calculer la date limite par mois
-    function calcularRetards(idxStr, startMonth, loyer) {
-        const idx = parseInt(idxStr, 10);
+    function calcularRetards(idx, startMonth, loyer) {
         const paiements = (JSON.parse(localStorage.getItem('paiements')) || {})[idx] || [];
         const now = new Date();
         const curMoisStr = now.toISOString().slice(0, 7);
@@ -547,17 +508,14 @@
         let nbMoisRetard = 0;
         let listeMois = [];
         
-        let d = new Date(startMonth.split('-')[0], parseInt(startMonth.split('-')[1]) - 1, 1);
+        let d = new Date(startMonth.split('-')[0], parseInt(startMonth.split('-')[1])-1, 1);
+        const dateEntree = new Date(startMonth + "-01");
+        const dateLimiteRetard = new Date(dateEntree.getTime() + (30 * 24 * 60 * 60 * 1000));
 
         while (d.toISOString().slice(0, 7) < curMoisStr) {
             const m = d.toISOString().slice(0, 7);
             const paye = paiements.find(p => p.mois === m && p.type === 'Paiement');
-
-            // date limite propre à ce mois : 1er du mois + 30 jours
-            const dateLimiteRetardMois = new Date(d.getFullYear(), d.getMonth(), 1);
-            dateLimiteRetardMois.setDate(dateLimiteRetardMois.getDate() + 30);
-
-            if(!paye && now > dateLimiteRetardMois) {
+            if(!paye && now > dateLimiteRetard) {
                 retards += loyer;
                 nbMoisRetard++;
                 listeMois.push(m);
@@ -585,9 +543,7 @@
     }
 
     function chargerHistorique() {
-        const idxStr = select.value;
-        if (!idxStr) return;
-        const idx = parseInt(idxStr, 10);
+        const idx = select.value;
         const p = JSON.parse(localStorage.getItem('paiements')) || {};
         const dataApt = JSON.parse(localStorage.getItem('appartements')) || [];
         historique.innerHTML = "";
@@ -596,7 +552,7 @@
         p[idx].slice().reverse().forEach((pay) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${dataApt[idx] ? dataApt[idx].nom : 'N/A'}</td>
+                <td>${dataApt[idx].nom}</td>
                 <td>${formatMoisLong(pay.mois)}</td>
                 <td>${pay.montant.toLocaleString()}</td>
                 <td><span class="badge ${pay.type === 'Avance' ? 'bg-primary' : 'bg-success'}">${pay.type}</span></td>
@@ -604,7 +560,7 @@
                 <td>${new Date(pay.dateEnregistrement).toLocaleString()}</td>
                 <td>
                     <button class="btn btn-sm btn-info" onclick="afficherRecu(${idx}, ${pay.id})">📄</button>
-                    <button class="btn btn-sm btn-danger admin-only" onclick="supprimerPaiement(${idx}, ${pay.id})">🗑️</button>
+                    <button class="btn btn-sm btn-danger" onclick="supprimerPaiement(${idx}, ${pay.id})">🗑️</button>
                 </td>
             `;
             historique.appendChild(tr);
@@ -614,7 +570,6 @@
     function supprimerPaiement(aptIdx, id) {
         if (!confirm("Supprimer ce paiement ?")) return;
         const p = JSON.parse(localStorage.getItem('paiements')) || {};
-        if (!p[aptIdx]) return;
         p[aptIdx] = p[aptIdx].filter(x => x.id !== id);
         localStorage.setItem('paiements', JSON.stringify(p));
         chargerHistorique();
@@ -663,10 +618,7 @@
     }
 
     function afficherDetailsAppartement() {
-        const idxStr = select.value;
-        if (!idxStr) return;
-        const idx = parseInt(idxStr, 10);
-        const data = JSON.parse(localStorage.getItem('appartements')) || [];
+        const idx = select.value, data = JSON.parse(localStorage.getItem('appartements')) || [];
         const proprios = JSON.parse(localStorage.getItem('smartloc_proprios')) || [];
         
         if (data[idx]) {
@@ -712,37 +664,29 @@
             window.currentAvanceTotal = totalAvance;
         } else {
             zone.classList.add('d-none');
-            window.currentAvanceTotal = 0;
         }
     }
 
     function appliquerPaiementParAvance(totalite) {
-        const idxStr = select.value;
-        if (!idxStr) return alert("Sélectionnez un appartement.");
-        const idx = parseInt(idxStr, 10);
-
-        const loyer = parseFloat(coutMensuelAffichage.value) || 0;
+        const idx = select.value;
+        const loyer = parseFloat(coutMensuelAffichage.value);
         let montantAUtiliser = 0;
 
         if (totalite) {
-            montantAUtiliser = window.currentAvanceTotal || 0;
+            montantAUtiliser = window.currentAvanceTotal;
         } else {
             const saisie = prompt("Montant de l'avance à déduire (FCFA) :", loyer);
             if (!saisie || isNaN(saisie)) return;
             montantAUtiliser = parseFloat(saisie);
-            if (montantAUtiliser > (window.currentAvanceTotal || 0)) return alert("Montant supérieur à l'avance disponible !");
+            if (montantAUtiliser > window.currentAvanceTotal) return alert("Montant supérieur à l'avance disponible !");
         }
 
         const nbMois = Math.floor(montantAUtiliser / loyer);
         if (nbMois < 1) return alert("Le montant est insuffisant pour couvrir un mois de loyer.");
 
         const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
-        if (!paiements[idx]) paiements[idx] = [];
-
         // Identifier les mois en retard ou en cours non payés
-        const moisOptions = Array.from(moisInput.options).filter(o => {
-            return !o.disabled && (o.classList.contains("option-retard") || o.textContent.includes("MOIS EN COURS"));
-        });
+        const moisOptions = Array.from(moisInput.options).filter(o => !o.disabled && (o.className === "option-retard" || o.textContent.includes("MOIS EN COURS")));
 
         if (moisOptions.length < nbMois) return alert("Pas assez de mois impayés/éligibles pour utiliser ce montant.");
 
@@ -778,7 +722,7 @@
 
     function ouvrirModalRetard() {
         const { apt, total, nbMois, liste } = lastRetardDetails;
-        if (!apt || total <= 0) return alert("Aucun retard.");
+        if (total <= 0) return alert("Aucun retard.");
 
         let tableau = `<table class="table table-sm table-striped small"><thead><tr><th>Mois</th><th class="text-end">Montant</th></tr></thead><tbody>`;
         liste.forEach(m => {
@@ -799,7 +743,6 @@
 
     function copierRetardWhatsApp() {
         const { apt, total, nbMois, liste } = lastRetardDetails;
-        if (!apt) return;
         const msg = `🏠 *RELANCE DE LOYER - SMARTLOC*\n` +
                   `----------------------------------\n` +
                   `👤 *Locataire :* ${apt.locataire}\n` +
@@ -810,7 +753,7 @@
                   `Mois impayés : \n` + liste.map(m => `• ${formatMoisLong(m)}`).join('\n') + `\n\n` +
                   `_Merci de régulariser au plus vite._`;
         
-        navigator.clipboard.writeText(msg).then(() => alert("Copié pour WhatsApp !")).catch(() => alert("Impossible de copier le texte."));
+        navigator.clipboard.writeText(msg).then(() => alert("Copié pour WhatsApp !"));
     }
 
     function genererListeMois(dateIn, idx) {
@@ -820,6 +763,9 @@
         
         const now = new Date();
         const curMoisStr = now.toISOString().slice(0, 7);
+        
+        const dateEntree = new Date(dateIn + "-01");
+        const dateLimiteRetard = new Date(dateEntree.getTime() + (30 * 24 * 60 * 60 * 1000));
 
         for (let i = 0; i < 600; i++) {
             const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
@@ -830,16 +776,11 @@
             const opt = document.createElement('option');
             opt.value = val;
             
-            // Calculer la date limite pour CE mois
-            const dateLimiteRetard = new Date(d.getFullYear(), d.getMonth(), 1);
-            dateLimiteRetard.setDate(dateLimiteRetard.getDate() + 30);
-
             if (paye) {
                 opt.textContent = `${lbl} (PAYÉ ✅)`;
                 opt.disabled = true;
                 opt.className = "option-paye";
             } else if (val < curMoisStr) {
-                // mois antérieur non payé -> retard
                 opt.textContent = `${lbl} (RETARD ⚠️🚨)`;
                 opt.className = "option-retard";
             } else if (val === curMoisStr) {
@@ -859,21 +800,18 @@
     }
 
     function validerPaiement() {
-        const idxStr = select.value;
-        if (!idxStr) return alert("Sélectionnez un appartement.");
-        const idx = parseInt(idxStr, 10);
-
+        const idx = select.value;
         const moisS = Array.from(moisInput.selectedOptions);
         if (moisS.length === 0) return alert("Sélectionnez au moins un mois.");
         
         const p = JSON.parse(localStorage.getItem('paiements')) || {};
         if (!p[idx]) p[idx] = [];
         
-        const loyer = parseFloat(coutMensuelAffichage.value) || 0;
+        const loyer = parseFloat(coutMensuelAffichage.value);
         let lastId = 0;
 
         moisS.forEach(o => {
-            lastId = Date.now() + Math.floor(Math.random() * 1000);
+            lastId = Date.now() + Math.random();
             p[idx].push({
                 id: lastId,
                 aptIdx: idx, 
@@ -901,10 +839,7 @@
     }
 
     function ajouterAvance() {
-        const idxStr = select.value;
-        if (!idxStr) return alert("Sélectionnez un appartement.");
-        const idx = parseInt(idxStr, 10);
-
+        const idx = select.value;
         const mnt = prompt("Montant de l'avance (FCFA) :");
         if (!mnt || isNaN(mnt)) return;
         
@@ -932,25 +867,17 @@
         }
     }
 
-    function afficherRecu(aptIdxRaw, payId) {
-        const aptIdx = parseInt(aptIdxRaw, 10);
+    function afficherRecu(aptIdx, payId) {
         const apts = JSON.parse(localStorage.getItem('appartements')) || [];
         const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
         const params = JSON.parse(localStorage.getItem('smartloc_params')) || {};
         const proprios = JSON.parse(localStorage.getItem('smartloc_proprios')) || [];
         
-        if (!paiements[aptIdx] || paiements[aptIdx].length === 0) {
-            return alert("Aucun paiement trouvé pour cet appartement.");
-        }
-        let pay = paiements[aptIdx].find(x => x.id == payId);
-        if (!pay) {
-            // fallback : prendre le dernier paiement enregistré
-            pay = paiements[aptIdx][paiements[aptIdx].length - 1];
-        }
-        const apt = apts[aptIdx] || {};
+        const pay = paiements[aptIdx].find(x => x.id == payId);
+        const apt = apts[aptIdx];
         const horodatage = new Date().toLocaleString('fr-FR');
 
-        const pInfo = proprios.find(p => p.nom === apt.proprietaireNom) || {};
+        const pInfo = proprios.find(p => p.nom === apt.proprietaireNom);
         const contactAffiche = apt.proprietaireContact || (pInfo ? (pInfo.contact || pInfo.telephone) : params.societeTel);
         const signatureAffichee = pInfo ? pInfo.signature : params.pdgSig;
 
@@ -970,8 +897,8 @@
                 <div class="row my-2">
                     <div class="col-6">
                         <h6 class="mb-1"><b>LOCATAIRE</b></h6>
-                        <p class="mb-0 text-uppercase small"><b>${apt.locataire || ''}</b></p>
-                        <p class="small mb-0">Appartement: ${apt.nom || ''}<br>${apt.ville || ''} / ${apt.quartier || ''}</p>
+                        <p class="mb-0 text-uppercase small"><b>${apt.locataire}</b></p>
+                        <p class="small mb-0">Appartement: ${apt.nom}<br>${apt.ville} / ${apt.quartier}</p>
                     </div>
                     <div class="col-6 text-end">
                         <h6 class="mb-1"><b>BAILLEUR / AGENCE</b></h6>
@@ -1006,7 +933,7 @@
                         <div style="min-height:70px; display:flex; align-items:center; justify-content:center;">
                             ${signatureAffichee ? `<img src="${signatureAffichee}" class="signature-img">` : ''}
                         </div>
-                        <p class="small"><b>${pInfo.nom || (params.pdgNom || 'Atizoun P. AMOUSSOU')}</b></p>
+                        <p class="small"><b>${pInfo ? pInfo.nom : (params.pdgNom || 'Atizoun P. AMOUSSOU')}</b></p>
                     </div>
                 </div>
                 <div class="mt-2 border-top pt-1 text-center">
@@ -1073,53 +1000,242 @@
       alert("Lot marqué comme exporté.");
     }
 
-    // Fonctions utilitaires restantes (stubs ou implémentations simples)
-
     function ouvrirScannerLotQR() {
       modalScannerQR.show();
-      // implémentation minimale du scanner
-      if (html5QrcodeScanner) return;
-      // On peut initialiser html5-qrcode ici si nécessaire
+      html5QrcodeScanner = new Html5Qrcode("reader");
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          try {
+            const result = JSON.parse(decodedText);
+            if(result.type === "LOT_PAIEMENTS") {
+              importerLotPaiements(result.data);
+              stopScanner();
+              modalScannerQR.hide();
+            }
+          } catch(e) { console.error("QR invalide"); }
+        }
+      );
     }
+
+    function importerLotPaiements(lot) {
+      const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
+      let ajouts = 0;
+      lot.forEach(pNew => {
+        if(!paiements[pNew.aptIdx]) paiements[pNew.aptIdx] = [];
+        const existe = paiements[pNew.aptIdx].find(p => p.id === pNew.id);
+        if(!existe) {
+          pNew.exporte = true; 
+          paiements[pNew.aptIdx].push(pNew);
+          ajouts++;
+        }
+      });
+      localStorage.setItem('paiements', JSON.stringify(paiements));
+      alert(`${ajouts} nouvelles opérations importées.`);
+      initialiserPage();
+    }
+
     function stopScanner() {
-      try { if (html5QrcodeScanner) { html5QrcodeScanner.stop(); html5QrcodeScanner = null; } } catch(e){}
+      if(html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => { html5QrcodeScanner = null; });
+      }
     }
 
-    function imprimerParIsolation(elementId) {
-      const content = document.getElementById(elementId);
-      if (!content) return alert("Rien à imprimer.");
-      printArea.innerHTML = content.innerHTML;
-      window.print();
-    }
-
-    function imprimerDernierRecu() {
-      if (!lastPayDetails || !lastPayDetails.pay) return alert("Aucun reçu à imprimer.");
-      printArea.innerHTML = document.getElementById('printableRecu') ? document.getElementById('printableRecu').outerHTML : document.getElementById('recuContent').innerHTML;
-      window.print();
+    function copierRecuWhatsApp() {
+        const { apt, pay, params, horodatage } = lastPayDetails;
+        const msg = `🏠 *REÇU DE LOYER - BECI NÉGOCE*\n` +
+                  `----------------------------------\n` +
+                  `📄 *N° :* ${Math.floor(pay.id/1000000)}\n` +
+                  `👤 *Locataire :* ${apt.locataire.toUpperCase()}\n` +
+                  `🏢 *Bien :* ${apt.nom}\n` +
+                  `📅 *Période :* ${formatMoisLong(pay.mois)}\n` +
+                  `💰 *Montant :* ${pay.montant.toLocaleString()} FCFA\n` +
+                  `✅ *Statut :* PAYÉ\n` +
+                  `----------------------------------\n` +
+                  `🕒 _Fait le : ${horodatage}_ \n` +
+                  `✍️ _Signé : ${params.pdgNom || 'Direction'}_`;
+        
+        navigator.clipboard.writeText(msg).then(() => alert("Copié !"));
     }
 
     function genererRapportGeneral() {
-      const apts = JSON.parse(localStorage.getItem('appartements')) || [];
-      const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
-      let html = '<div><h4>Rapport général</h4><table class="table table-sm"><thead><tr><th>Appartement</th><th>Total perçu</th></tr></thead><tbody>';
-      apts.forEach((a, idx) => {
-        const p = paiements[idx] || [];
-        const total = p.filter(x => x.type === 'Paiement').reduce((s, x) => s + x.montant, 0);
-        html += `<tr><td>${a.nom}</td><td>${total.toLocaleString()} FCFA</td></tr>`;
-      });
-      html += '</tbody></table></div>';
-      document.getElementById('rapportContent').innerHTML = html;
-      modalRapport.show();
+        const apts = JSON.parse(localStorage.getItem('appartements')) || [];
+        const paiements = JSON.parse(localStorage.getItem('paiements')) || {};
+        const params = JSON.parse(localStorage.getItem('smartloc_params')) || {};
+        const proprios = JSON.parse(localStorage.getItem('smartloc_proprios')) || [];
+        const horodatage = new Date().toLocaleString('fr-FR');
+
+        let totalGlobalPaye = 0;
+        let totalGlobalRetard = 0;
+        let totalAvances = 0;
+        let totalLoyerMensuel = 0;
+        let tableRows = '';
+
+        apts.forEach((apt, idx) => {
+            if(apt.locataire && apt.locataire !== "VACANT" && apt.locataire !== "Néant") {
+                const paiementsApt = paiements[idx] || [];
+                const totalPaye = paiementsApt.filter(p => p.type === 'Paiement').reduce((s, p) => s + p.montant, 0);
+                const totalAvanceApt = paiementsApt.filter(p => p.type === 'Avance').reduce((s, p) => s + p.montant, 0);
+                const retards = calcularRetards(idx, apt.dateEntree || apt.date, apt.cout || 0);
+                
+                totalGlobalPaye += totalPaye;
+                totalGlobalRetard += retards.total;
+                totalAvances += totalAvanceApt;
+                totalLoyerMensuel += (apt.cout || 0);
+                
+                const solde = totalPaye - retards.total + totalAvanceApt;
+                
+                tableRows += `
+                    <tr>
+                        <td>${apt.nom}</td>
+                        <td>${apt.locataire}</td>
+                        <td class="text-end">${(apt.cout || 0).toLocaleString()}</td>
+                        <td class="text-end">${totalPaye.toLocaleString()}</td>
+                        <td class="text-end">${retards.total.toLocaleString()}</td>
+                        <td class="text-end">${totalAvanceApt.toLocaleString()}</td>
+                        <td class="text-end fw-bold ${solde >= 0 ? 'text-success' : 'text-danger'}">${solde.toLocaleString()}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        const signatureRapport = params.pdgSig || '';
+        const nomSignataire = params.pdgNom || 'Atizoun P. AMOUSSOU';
+
+        lastReportDetails = { 
+            totalGlobalPaye, 
+            totalGlobalRetard, 
+            totalAvances, 
+            totalLoyerMensuel,
+            horodatage, 
+            params 
+        };
+
+        const html = `
+            <div id="printRapport" class="p-3">
+                <div class="d-flex justify-content-between border-bottom pb-2 mb-3">
+                    <img src="logo.png" style="height:45px;">
+                    <div class="text-center">
+                        <h4 class="mb-1 text-primary">BILAN COMPTABLE GÉNÉRAL</h4>
+                        <p class="mb-0 small"><b>SMARTLOC - GESTION IMMOBILIÈRE</b></p>
+                        <p class="mb-0 x-small">Arrêté le ${horodatage}</p>
+                    </div>
+                    <img src="timbre.png" style="height:45px;">
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-3 text-center border p-3">
+                        <h6 class="text-success">Total Payé</h6>
+                        <h4 class="fw-bold">${totalGlobalPaye.toLocaleString()} FCFA</h4>
+                    </div>
+                    <div class="col-md-3 text-center border p-3">
+                        <h6 class="text-danger">Total Retards</h6>
+                        <h4 class="fw-bold">${totalGlobalRetard.toLocaleString()} FCFA</h4>
+                    </div>
+                    <div class="col-md-3 text-center border p-3">
+                        <h6 class="text-primary">Total Avances</h6>
+                        <h4 class="fw-bold">${totalAvances.toLocaleString()} FCFA</h4>
+                    </div>
+                    <div class="col-md-3 text-center border p-3">
+                        <h6 class="text-dark">Loyer Mensuel Total</h6>
+                        <h4 class="fw-bold">${totalLoyerMensuel.toLocaleString()} FCFA</h4>
+                    </div>
+                </div>
+                
+                <h5 class="mt-4 mb-3 border-bottom pb-2">Détail par Appartement</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Appartement</th>
+                                <th>Locataire</th>
+                                <th class="text-end">Loyer</th>
+                                <th class="text-end">Payé</th>
+                                <th class="text-end">Retard</th>
+                                <th class="text-end">Avance</th>
+                                <th class="text-end">Solde</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                        <tfoot class="table-dark fw-bold">
+                            <tr>
+                                <td colspan="3">TOTAUX GÉNÉRAUX</td>
+                                <td class="text-end">${totalGlobalPaye.toLocaleString()}</td>
+                                <td class="text-end">${totalGlobalRetard.toLocaleString()}</td>
+                                <td class="text-end">${totalAvances.toLocaleString()}</td>
+                                <td class="text-end">${(totalGlobalPaye - totalGlobalRetard + totalAvances).toLocaleString()}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="row mt-5">
+                    <div class="col-6">
+                        <h6 class="border-bottom pb-1">Observations</h6>
+                        <p class="small">
+                            Ce bilan présente la situation financière de l'ensemble du parc immobilier géré par SMARTLOC.<br>
+                            Tous les montants sont exprimés en Francs CFA (FCFA).
+                        </p>
+                    </div>
+                    <div class="col-6 text-center">
+                        <h6 class="border-bottom pb-1">Signature</h6>
+                        <div style="min-height:100px; display:flex; align-items:center; justify-content:center;">
+                            ${signatureRapport ? `<img src="${signatureRapport}" class="signature-img">` : ''}
+                        </div>
+                        <p class="mb-0"><b>${nomSignataire}</b></p>
+                        <p class="x-small mb-0">Directeur Général</p>
+                        <p class="x-small">SMARTLOC - BECI NÉGOCE</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('rapportContent').innerHTML = html;
+        modalRapport.show();
+    }
+
+    function copierRapportWhatsApp() {
+        const { totalGlobalPaye, totalGlobalRetard, totalAvances, totalLoyerMensuel, horodatage } = lastReportDetails;
+        const msg = `📊 *BILAN COMPTABLE SMARTLOC*\n` +
+                  `----------------------------------\n` +
+                  `📅 *Date :* ${horodatage}\n` +
+                  `💰 *Total Loyer Payé :* ${totalGlobalPaye.toLocaleString()} FCFA\n` +
+                  `🚨 *Total Retards :* ${totalGlobalRetard.toLocaleString()} FCFA\n` +
+                  `🎁 *Total Avances :* ${totalAvances.toLocaleString()} FCFA\n` +
+                  `🏢 *Loyer Mensuel Total :* ${totalLoyerMensuel.toLocaleString()} FCFA\n` +
+                  `🧮 *Solde Net :* ${(totalGlobalPaye - totalGlobalRetard + totalAvances).toLocaleString()} FCFA\n` +
+                  `----------------------------------\n` +
+                  `_Bilan généré automatiquement par SMARTLOC_`;
+        
+        navigator.clipboard.writeText(msg).then(() => alert("Bilan copié pour WhatsApp !"));
+    }
+
+    function imprimerParIsolation(divId) {
+        const content = document.getElementById(divId).innerHTML;
+        printArea.innerHTML = content;
+        setTimeout(() => { window.print(); }, 500);
+    }
+
+    function imprimerRecuDepuisModale() {
+        imprimerParIsolation('recuContent');
     }
 
     function terminerLocation() {
-      if (!confirm("Confirmer la fin de location et archive ?")) return;
-      // Implémentation spécifique selon application (stub)
-      alert("Location terminée (action à implémenter).");
+        if(!confirm("Clôturer la location ?")) return;
+        const idx = select.value;
+        const data = JSON.parse(localStorage.getItem('appartements')) || [];
+        if (data[idx]) {
+            data[idx].locataire = "VACANT";
+            localStorage.setItem('appartements', JSON.stringify(data));
+            location.reload();
+        }
     }
 
-    // Initialisation
-    document.addEventListener('DOMContentLoaded', initialiserPage);
+    window.onload = initialiserPage;
   </script>
+
+<script src="pwa-setup.js"></script>
+<script src="synchronisation.js"></script>
+<script src="initialisation.js"></script>
 </body>
 </html>
